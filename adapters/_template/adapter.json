@@ -1,0 +1,157 @@
+{
+  "name": "_template",
+  "display_name": "Your team / platform",
+  "language": "en",
+  "regions": [
+    "REGION_A",
+    "REGION_B"
+  ],
+  "default_regions": [
+    "REGION_A",
+    "REGION_B"
+  ],
+  "aggregate_row_label": "ALL",
+  "region_column_names": [
+    "region",
+    "data_center",
+    "shard"
+  ],
+  "raw_name_pattern": "^\\d{8}_.+_(REGION_A|REGION_B|ALL)\\.csv$",
+  "fetch_limits": {
+    "default": {
+      "rows": null,
+      "bytes": null,
+      "note": "Fill in the per-engine row/byte cap that silently truncates results, if any."
+    }
+  },
+  "sql": {
+    "header_markers": [
+      "Goal",
+      "Definition",
+      "Scope"
+    ],
+    "header_lines": 40,
+    "sampling_patterns": [
+      "pmod\\s*\\(\\s*hash",
+      "TABLESAMPLE",
+      "RAND\\s*\\(\\s*\\)\\s*<"
+    ],
+    "dialect_checks": "checks.py"
+  },
+  "doc": {
+    "section_background": [
+      "Background"
+    ],
+    "section_conclusions": [
+      "Conclusions",
+      "TL;DR",
+      "Summary"
+    ],
+    "section_skip": [
+      "Appendix",
+      "Case review",
+      "Background",
+      "Conclusions",
+      "TL;DR",
+      "Summary"
+    ],
+    "forbidden_sections": [
+      "Limitations",
+      "Alternative explanations",
+      "Caveats"
+    ],
+    "confidence_label_patterns": [
+      "\\b(high|medium|low)[- ]confidence\\b",
+      "confidence\\s*[:：]\\s*(high|medium|low)"
+    ],
+    "colloquial_words": [
+      "blew up",
+      "tanked",
+      "cratered",
+      "skyrocketed",
+      "crushed it",
+      "went viral"
+    ],
+    "invented_words": [],
+    "control_column_patterns": [
+      "\\bDiD\\b",
+      "net effect"
+    ],
+    "term_suffixes": [
+      "rate",
+      "ratio",
+      "share",
+      "index",
+      "score",
+      "effect",
+      "contribution",
+      "tier",
+      "segment"
+    ],
+    "ascii_ignore": [
+      "pp",
+      "vs",
+      "ALL",
+      "NA",
+      "TBD",
+      "OK",
+      "AB",
+      "TL",
+      "DR",
+      "md",
+      "xlsx",
+      "csv"
+    ],
+    "comparison_words": [
+      "higher",
+      "lower",
+      "up",
+      "down",
+      "increase",
+      "decrease",
+      "rose",
+      "fell"
+    ],
+    "comparison_ok": [
+      "than",
+      "vs",
+      "compared",
+      "versus",
+      "from .+ to"
+    ],
+    "vocab": "vocab.txt",
+    "vocab_sources": [
+      "references/glossary.md",
+      "references/metrics.md",
+      "references/tables.md",
+      "exemplars/*.md"
+    ]
+  },
+  "guard": {
+    "command_patterns": [
+      "your-cli",
+      "node\\s+\\S*your-cli\\.js"
+    ],
+    "submit_patterns": [],
+    "submit_region": null,
+    "query_file_flags": [
+      "--query-file",
+      "--file"
+    ],
+    "approvals_dir": "~/.claude/approvals",
+    "approval_ttl_seconds": 86400,
+    "tests": {
+      "cli": "your-cli",
+      "query_cmd": "your-cli query run --region REGION_A --sql \"{sql}\"",
+      "readonly_cmd": "your-cli job status --id 1"
+    }
+  },
+  "metadata_assistant": null,
+  "references": {
+    "platform": "references/platform.md",
+    "tables": "references/tables.md",
+    "metrics": "references/metrics.md",
+    "glossary": "references/glossary.md",
+    "delivery": "references/delivery.md"
+  }
+}

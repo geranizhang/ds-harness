@@ -1,0 +1,9 @@
+{
+  "name": "ds-harness",
+  "version": "0.1.0",
+  "description": "Data-analysis harness for Claude Code: hypothesis brief → data retrieval agent → adversarial review → report writer, with four human gates, deterministic validators and an environment-level guard. Platform specifics live in adapters.",
+  "author": {
+    "name": "geranizhang"
+  },
+  "keywords": ["data-analysis", "agents", "harness", "sql", "reporting"]
+}

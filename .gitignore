@@ -1,0 +1,6 @@
+.DS_Store
+__pycache__/
+*.pyc
+# team adapters are private; only the template ships with the repository
+adapters/*
+!adapters/_template/
