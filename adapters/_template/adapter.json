@@ -1,157 +1,104 @@
 {
+  "spec_version": "0.2",
   "name": "_template",
   "display_name": "Your team / platform",
   "language": "en",
-  "regions": [
-    "REGION_A",
-    "REGION_B"
-  ],
-  "default_regions": [
-    "REGION_A",
-    "REGION_B"
-  ],
-  "aggregate_row_label": "ALL",
-  "region_column_names": [
-    "region",
-    "data_center",
-    "shard"
-  ],
-  "raw_name_pattern": "^\\d{8}_.+_(REGION_A|REGION_B|ALL)\\.csv$",
-  "fetch_limits": {
-    "default": {
-      "rows": null,
-      "bytes": null,
-      "note": "Fill in the per-engine row/byte cap that silently truncates results, if any."
+
+  "platform": {
+    "regions": ["REGION_A", "REGION_B"],
+    "default_regions": ["REGION_A", "REGION_B"],
+    "region_aliases": {},
+    "tools": {"query_cli": "your-cli", "mcp_server": null},
+    "fetch_limits": {
+      "default": {"rows": null, "bytes": null, "note": "per-engine cap that silently truncates results, if any"}
+    },
+    "sql": {
+      "header_markers": ["Goal", "Definition", "Scope"],
+      "header_lines": 40,
+      "sampling_patterns": ["pmod\\s*\\(\\s*hash", "TABLESAMPLE", "RAND\\s*\\(\\s*\\)\\s*<"],
+      "dialect_checks": "platform/checks.py"
+    },
+    "runbooks": {"default": "platform/runbook.md"},
+    "setup": null
+  },
+
+  "compliance": {
+    "red_lines": "compliance/red-lines.md",
+    "column_pool": null,
+    "guard": {
+      "command_patterns": ["your-cli", "node\\s+\\S*your-cli\\.js"],
+      "submit_patterns": [],
+      "submit_region": null,
+      "query_file_flags": ["--query-file", "--file"],
+      "tests": {
+        "cli": "your-cli",
+        "query_cmd": "your-cli query run --region REGION_A --sql \"{sql}\"",
+        "readonly_cmd": "your-cli job status --id 1"
+      }
     }
   },
-  "sql": {
-    "header_markers": [
-      "Goal",
-      "Definition",
-      "Scope"
-    ],
-    "header_lines": 40,
-    "sampling_patterns": [
-      "pmod\\s*\\(\\s*hash",
-      "TABLESAMPLE",
-      "RAND\\s*\\(\\s*\\)\\s*<"
-    ],
-    "dialect_checks": "checks.py"
+
+  "channel": {
+    "metadata_assistant": null,
+    "operations": "channel/README.md",
+    "secrets_env": []
   },
-  "doc": {
-    "section_background": [
-      "Background"
-    ],
-    "section_conclusions": [
-      "Conclusions",
-      "TL;DR",
-      "Summary"
-    ],
-    "section_skip": [
-      "Appendix",
-      "Case review",
-      "Background",
-      "Conclusions",
-      "TL;DR",
-      "Summary"
-    ],
-    "forbidden_sections": [
-      "Limitations",
-      "Alternative explanations",
-      "Caveats"
-    ],
-    "confidence_label_patterns": [
-      "\\b(high|medium|low)[- ]confidence\\b",
-      "confidence\\s*[:：]\\s*(high|medium|low)"
-    ],
-    "colloquial_words": [
-      "blew up",
-      "tanked",
-      "cratered",
-      "skyrocketed",
-      "crushed it",
-      "went viral"
-    ],
-    "invented_words": [],
-    "control_column_patterns": [
-      "\\bDiD\\b",
-      "net effect"
-    ],
-    "term_suffixes": [
-      "rate",
-      "ratio",
-      "share",
-      "index",
-      "score",
-      "effect",
-      "contribution",
-      "tier",
-      "segment"
-    ],
-    "ascii_ignore": [
-      "pp",
-      "vs",
-      "ALL",
-      "NA",
-      "TBD",
-      "OK",
-      "AB",
-      "TL",
-      "DR",
-      "md",
-      "xlsx",
-      "csv"
-    ],
-    "comparison_words": [
-      "higher",
-      "lower",
-      "up",
-      "down",
-      "increase",
-      "decrease",
-      "rose",
-      "fell"
-    ],
-    "comparison_ok": [
-      "than",
-      "vs",
-      "compared",
-      "versus",
-      "from .+ to"
-    ],
-    "vocab": "vocab.txt",
-    "vocab_sources": [
-      "references/glossary.md",
-      "references/metrics.md",
-      "references/tables.md",
-      "exemplars/*.md"
-    ]
+
+  "knowledge": {
+    "tables": "knowledge/tables.md",
+    "metrics": "knowledge/metrics.md",
+    "glossary": "knowledge/glossary.md"
   },
-  "guard": {
-    "command_patterns": [
-      "your-cli",
-      "node\\s+\\S*your-cli\\.js"
-    ],
-    "submit_patterns": [],
-    "submit_region": null,
-    "query_file_flags": [
-      "--query-file",
-      "--file"
-    ],
-    "approvals_dir": "~/.claude/approvals",
-    "approval_ttl_seconds": 86400,
-    "tests": {
-      "cli": "your-cli",
-      "query_cmd": "your-cli query run --region REGION_A --sql \"{sql}\"",
-      "readonly_cmd": "your-cli job status --id 1"
+
+  "analysis_priors": {
+    "domain": "analysis-priors/domain.md",
+    "findings": "analysis-priors/findings.md",
+    "hypotheses": "analysis-priors/hypotheses.md",
+    "confounders": "analysis-priors/confounders.md",
+    "stances": "analysis-priors/stances.md"
+  },
+
+  "delivery": {
+    "conventions": "delivery/conventions.md",
+    "exemplars": "delivery/exemplars",
+    "vocab": "delivery/vocab.txt",
+    "vocab_sources": ["knowledge/glossary.md", "knowledge/metrics.md", "knowledge/tables.md", "delivery/exemplars/*.md"],
+    "tables": {"aggregate_row_label": "ALL", "region_column_names": ["region", "data_center", "shard"]},
+    "doc": {
+      "section_background": ["Background"],
+      "section_conclusions": ["Conclusions", "TL;DR", "Summary"],
+      "section_skip": ["Appendix", "Case review", "Background", "Conclusions", "TL;DR", "Summary"],
+      "forbidden_sections": ["Limitations", "Alternative explanations", "Caveats"],
+      "confidence_label_patterns": ["\\b(high|medium|low)[- ]confidence\\b", "confidence\\s*[:：]\\s*(high|medium|low)"],
+      "colloquial_words": ["blew up", "tanked", "cratered", "skyrocketed", "crushed it", "went viral"],
+      "invented_words": [],
+      "control_column_patterns": ["\\bDiD\\b", "net effect"],
+      "term_suffixes": ["rate", "ratio", "share", "index", "score", "effect", "contribution", "tier", "segment"],
+      "cjk_suffix_terms": false,
+      "ascii_ignore": ["pp", "vs", "ALL", "NA", "TBD", "OK", "AB", "TL", "DR", "md", "xlsx", "csv"],
+      "comparison_words": ["higher", "lower", "up", "down", "increase", "decrease", "rose", "fell"],
+      "comparison_ok": ["than", "vs", "compared", "versus", "from .+ to"],
+      "number_units": ["%", "pp", "x", "×", "k", "K", "M", "B"],
+      "unit_multipliers": {"k": 1000, "K": 1000, "M": 1000000, "B": 1000000000}
     }
   },
-  "metadata_assistant": null,
-  "references": {
-    "platform": "references/platform.md",
-    "tables": "references/tables.md",
-    "metrics": "references/metrics.md",
-    "glossary": "references/glossary.md",
-    "delivery": "references/delivery.md"
-  }
+
+  "operations": {
+    "workspace": {
+      "projects_root": "~/work/projects",
+      "raw_name_pattern": "^\\d{8}_.+_(REGION_A|REGION_B|ALL)\\.csv$",
+      "versions_columns": ["deliverable", "version", "date", "change", "definition_changed", "script", "source_data", "synced_to_documents"],
+      "commit_raw_to_git": true
+    },
+    "governance": {
+      "approvals_dir": "~/.claude/approvals",
+      "approval_ttl_seconds": 86400,
+      "gates": {"gate1_placement": "human", "gate2_plan": "human", "gate3_outline": "human", "gate4_publish": "human"},
+      "qa_followup": {"autonomous_classes": ["T0", "T1", "T2", "T4"], "approver": "owner"},
+      "headless_guardrails": "operations/guardrails.md"
+    }
+  },
+
+  "evals": {"cases": "evals/evals_cases.py", "corrections": "evals/corrections.jsonl"},
+  "extensions": {"skills": "skills", "agents": "agents"}
 }

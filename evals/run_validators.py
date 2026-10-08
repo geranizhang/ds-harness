@@ -3,7 +3,7 @@
 
 Usage:
   python3 evals/run_validators.py                # against adapters/_template (core checks only)
-  DS_HARNESS_ADAPTER_DIR=/path/to/your-adapter python3 evals/run_validators.py   # adds the adapter's evals_cases.py
+  DS_HARNESS_ADAPTER_DIR=/path/to/your-adapter python3 evals/run_validators.py   # adds the adapter's evals.cases
 
 Every case reproduces a real incident class:
   truncation  silent unordered fetch cap            → validate_raw must FAIL and --fix must quarantine
@@ -33,11 +33,12 @@ import harness_config as hc  # noqa: E402
 CFG = hc.load()
 ADAPTER = CFG["name"]
 ADAPTER_DIR = Path(CFG["_dir"])
-HDR = " ".join(CFG["sql"]["header_markers"])
-REGIONS = CFG["regions"]
+HDR = " ".join(hc.get(CFG, "platform.sql.header_markers", []))
+REGIONS = hc.get(CFG, "platform.regions", ["R"])
 R0 = REGIONS[0]
-AGG = CFG.get("aggregate_row_label", "ALL")
-REGION_COL = (CFG.get("region_column_names") or ["region"])[0]
+AGG = hc.get(CFG, "delivery.tables.aggregate_row_label", "ALL")
+REGION_COL = hc.get(CFG, "delivery.tables.region_column_names", ["region"])[0]
+DOC = hc.get(CFG, "delivery.doc", {})
 results = []
 
 
@@ -107,7 +108,7 @@ FROM t GROUP BY entity_id, date, tier ORDER BY SUM(views) DESC LIMIT 4500"""
 
 def case_doc(tmp):
     t = f"{tmp}/topic_doc"
-    doc = CFG["doc"]
+    doc = DOC
     bg, cl = doc["section_background"][0], doc["section_conclusions"][0]
     coll = doc["colloquial_words"][0]
     conf = "（高置信）" if doc.get("cjk_suffix_terms") else "(high-confidence)"
@@ -144,14 +145,10 @@ def case_xlsx(tmp):
 
 
 def adapter_cases():
-    """An adapter may ship evals_cases.py with `cases(ctx) -> list[callable(tmp)]`; ctx exposes run / expect / w / HDR / V_SQL."""
-    p = ADAPTER_DIR / "evals_cases.py"
-    if not p.exists():
+    """An adapter may name an evals module (adapter.json → evals.cases) with `cases(ctx) -> list[callable(tmp)]`."""
+    mod = hc.load_module(CFG, "evals.cases")
+    if mod is None or not hasattr(mod, "cases"):
         return []
-    import importlib.util
-    spec = importlib.util.spec_from_file_location("adapter_evals", p)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)  # type: ignore[attr-defined]
     ctx = {"run": run, "expect": expect, "w": w, "HDR": HDR, "V_SQL": V_SQL, "V_RAW": V_RAW, "V_DOC": V_DOC, "V_XLSX": V_XLSX}
     return list(mod.cases(ctx))
 

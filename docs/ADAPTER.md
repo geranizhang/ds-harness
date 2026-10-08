@@ -1,56 +1,52 @@
 # Writing an adapter
 
-An adapter teaches ds-harness about one data platform and one team. The core knows the *shape* of good analysis work; the adapter knows your tables, your regions, your compliance rules, your document tool and your team's vocabulary.
+An adapter teaches ds-harness about one data platform and one team. The core knows the *shape* of good analysis work; the adapter knows your tables, your regions, your compliance rules, your document tool, your vocabulary and what your team has already learned. The contract is `adapter-spec/README.md`; this page is the walkthrough.
 
-## 1. Copy the template
-
-```bash
-cp -R adapters/_template adapters/<your-team>
-export DS_HARNESS_ADAPTER=<your-team>        # or DS_HARNESS_ADAPTER_DIR=/abs/path
-```
-
-## 2. Fill `adapter.json`
-
-| Key | Meaning | Used by |
-|---|---|---|
-| `regions`, `default_regions` | independent data partitions you must query separately (data centers, shards, tenants). One region is fine | data-runner, validate_xlsx, run_validators |
-| `aggregate_row_label`, `region_column_names` | the "all regions" row label and the header names that mark a region column | validate_xlsx, report-writer |
-| `raw_name_pattern` | regex for raw file names; must end in `_<REGION>.csv` | validate_raw |
-| `fetch_limits` | per-engine caps that silently truncate; the runner splits queries rather than aggregating | data-runner |
-| `sql.header_markers`, `sql.header_lines` | words that must appear in a SQL header block (goal / definition / scope, in your language) | validate_sql, guard |
-| `sql.sampling_patterns` | regexes that identify sampling | validate_sql, guard |
-| `sql.dialect_checks` | path to `checks.py` with `sql_checks(sql, region) -> (errors, warnings)` | validate_sql, guard |
-| `sql.region_aliases` | maps the names people type to the names your CLI wants | validate_sql |
-| `doc.*` | section names, forbidden words, confidence-label regexes, term suffixes, comparison words, number units — everything `validate_doc.py` needs to work in your language | validate_doc, build_vocab |
-| `guard.command_patterns` | what your data CLI looks like on a command line (bare name, `node …/cli.js`) | guard |
-| `guard.submit_patterns`, `guard.submit_region` | which commands are submissions to a compliance-bound region; the guard validates their `--query-file` on the spot | guard |
-| `guard.approvals_dir`, `guard.approval_ttl_seconds` | where the main session touches `sampling` after the user approves, and for how long it counts | guard |
-| `metadata_assistant` | optional script: ask your internal catalog bot a factual question, print its reply | workflow §2 step 3, data-runner |
-| `references` | logical name → file; agents read through this map (`platform`, `tables`, `metrics`, `glossary`, `delivery`, plus any region-specific extras) | every agent |
-
-## 3. Write the references
-
-The templates under `_template/references/` show the shape. Three conventions matter more than the rest:
-
-- **`tables.md` opens with a scope index** — global replica vs partitioned-by-region vs merged single source vs unverified. The single most expensive mistake this harness guards against is summing a global table across regions.
-- **`metrics.md` separates rules from dated evidence.** A rule has no date. "On 2026-08-12 we observed X" has one, and that date is how a later reader knows whether to trust it.
-- **Compliance red lines have one authoritative location** (usually the top of the compliance region's platform runbook). Agents link to it; they do not restate it.
-
-## 4. Exemplars and vocabulary
-
-Put 1–3 finished reports in `exemplars/` and describe their type in `exemplars/README.md`. Then `python3 skills/report-writing/scripts/build_vocab.py` generates the top half of `vocab.txt`; keep team-accepted words that the generator misses under `# --- manual ---`.
-
-Exemplars are usually internal. If you publish your adapter, strip them and keep the README.
-
-## 5. Channel (optional, for `qa-followup`)
-
-`qa-followup` needs four operations: `ack`, `reply_in_thread`, `dm_owner`, `read_document`. Put the concrete CLI calls in `channel/README.md` and the daemon that starts the agent outside this repository (it is a long-running process, not a plugin component).
-
-## 6. Run the regressions
+## 1. Start from the template
 
 ```bash
-DS_HARNESS_ADAPTER=<your-team> python3 evals/run_validators.py
-DS_HARNESS_ADAPTER=<your-team> bash evals/run_hook_tests.sh     # only if you set guard.submit_patterns
+cp -R adapters/_template /path/to/<your-team>      # outside this repo: adapters are private by design
+python3 -c "import json; json.load(open('/path/to/<your-team>/adapter.json'))"
 ```
 
-Add a `case_adapter_<name>` to `run_validators.py` for your own dialect checks: one bad SQL that must fail, one good SQL that must pass.
+Keep `spec_version: "0.2"`, change `name`, `display_name`, `language`.
+
+## 2. Fill the three required slots first
+
+**platform** — `adapter.json → platform`: your regions (independent data partitions you query separately; one is fine), `default_regions`, the CLI or MCP server name, `fetch_limits` (the per-engine caps that silently truncate), `sql.header_markers` in your language, `sql.sampling_patterns`, `region_aliases` if people type different names than the CLI wants. Then `platform/runbook.md` per region (submit → poll → fetch, terminal states, failure signatures) and `platform/checks.py` with `sql_checks(sql, region) -> (errors, warnings)` for dialect rules.
+
+**delivery** — `adapter.json → delivery.doc` holds everything `validate_doc.py` needs in your language: section names, forbidden sections, confidence-label regexes, colloquialisms, term suffixes, comparison words, number units. `delivery.tables` names the aggregate row and the region-column headers. `delivery/conventions.md` says how your document tool is driven. Drop 1–3 finished reports into `delivery/exemplars/` and describe their type in its README (the two fictional ones are placeholders — replace them). Run `build_vocab.py` to seed `delivery/vocab.txt`.
+
+**operations** — `adapter.json → operations.workspace` (projects root, raw-file pattern, version-ledger columns, whether raw is committed) and `operations.governance` (approvals directory and TTL, which gates may be pre-authorized, what `qa-followup` may do alone and who approves the rest); `operations/guardrails.md` for daemon-started sessions.
+
+At this point the workflow runs end to end on your platform.
+
+## 3. Fill the recommended slots
+
+**knowledge** — `knowledge/tables.md` *opens with a scope index* (global replica vs partitioned-by-region vs merged single source vs unverified); summing a global table across regions is the most expensive mistake this harness guards against. `knowledge/metrics.md` holds definitions only — five parts each. `knowledge/glossary.md` holds team shorthand and the default analysis scene.
+
+**analysis-priors** — `domain.md` (how the system works), `findings.md` (settled conclusions; the workflow appends here at §5 and §6), `hypotheses.md` (recurring hypotheses and how they were tested), `confounders.md` (standard confounders, default dimensions, default control variable), `stances.md` (team choices: sampling default, region merging, estimation stance). Dated evidence that used to sit in a metric dictionary belongs in `findings.md`.
+
+## 4. Optional slots
+
+**compliance** — `compliance/red-lines.md` is the single authoritative statement of what is forbidden; `compliance.guard.submit_patterns` and `submit_region` make the hook validate submissions to that region on the spot. `compliance.guard.tests` lets `evals/run_hook_tests.sh` exercise your patterns.
+
+**channel** — `channel.metadata_assistant` (a script that asks your catalog bot a factual question) and `channel/README.md` with the four `qa-followup` operations for your chat tool. Secrets go in env vars named in `channel.secrets_env` or in git-ignored `channel/secrets.json`.
+
+**evals** — `evals/evals_cases.py` with `cases(ctx)` (one SQL that must fail your checks, one that must pass); `evals/corrections.jsonl` as your team's correction ledger.
+
+**extensions** — team-only skills under `skills/<name>/SKILL.md` and agents under `agents/<name>.md`; the installer links them beside the core.
+
+## 5. Install and verify
+
+```bash
+bin/install.sh /path/to/<your-team>
+DS_HARNESS_ADAPTER_DIR=/path/to/<your-team> python3 evals/run_validators.py
+DS_HARNESS_ADAPTER_DIR=/path/to/<your-team> bash evals/run_hook_tests.sh
+```
+
+The installer symlinks core and adapter into `~/.claude` and writes `~/.claude/ds-harness-adapter`; scripts, the hook and the agents resolve the adapter from that pointer when no env var is set.
+
+## 6. Keep it alive
+
+Three write-back targets: table facts → `knowledge/tables.md`; definitions → `knowledge/metrics.md`; conclusions → `analysis-priors/findings.md`. Rule changes get one line in the adapter's `CHANGELOG.md`; rule text carries no dates.

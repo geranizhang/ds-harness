@@ -2,7 +2,8 @@
 # ds-harness PreToolUse guard. Enforces two things in the environment so they do not depend on the model remembering:
 #   1) a compliance-region submission that carries a query file is validated on the spot (validate_sql --region <submit_region>); errors block
 #   2) sampling SQL is blocked unless an approval file exists (touched by the main session after the user approved; expires)
-# What counts as "the data CLI", what a submission looks like and which region is compliance-bound come from adapters/<name>/adapter.json "guard".
+# What counts as "the data CLI", what a submission looks like and which region is compliance-bound come from the adapter:
+#   compliance.guard.*  ·  operations.governance.approvals_dir / approval_ttl_seconds  ·  platform.sql.sampling_patterns
 # Exit 2 = block and hand stderr to the model; 0 = allow.
 
 IN=$(cat)
@@ -11,18 +12,27 @@ CMD=$(printf '%s' "$IN" | python3 -c 'import sys,json; d=json.load(sys.stdin); p
 [ -z "$CMD" ] && exit 0
 
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
-ADIR="${DS_HARNESS_ADAPTER_DIR:-$ROOT/adapters/${DS_HARNESS_ADAPTER:-_template}}"
+if [ -n "$DS_HARNESS_ADAPTER_DIR" ]; then ADIR="$DS_HARNESS_ADAPTER_DIR"
+elif [ -n "$DS_HARNESS_ADAPTER" ]; then ADIR="$ROOT/adapters/$DS_HARNESS_ADAPTER"
+elif [ -s "$HOME/.claude/ds-harness-adapter" ]; then ADIR="$(head -1 "$HOME/.claude/ds-harness-adapter")"
+else ADIR="$ROOT/adapters/_template"; fi
+ADIR="${ADIR/#\~/$HOME}"
 CFG="$ADIR/adapter.json"
 [ -f "$CFG" ] || exit 0   # no adapter → nothing platform-specific to enforce
 
-read_cfg() { python3 -c 'import sys,json; d=json.load(open(sys.argv[1])); g=d.get("guard",{}); v=g.get(sys.argv[2]); print("|".join(v) if isinstance(v,list) else ("" if v is None else v))' "$CFG" "$1" 2>/dev/null; }
-CMD_PAT=$(read_cfg command_patterns)
-SUBMIT_PAT=$(read_cfg submit_patterns)
-SUBMIT_REGION=$(read_cfg submit_region)
-QF_FLAGS=$(read_cfg query_file_flags); QF_FLAGS=${QF_FLAGS:---query-file|--file}
-APPR=$(read_cfg approvals_dir); APPR=${APPR:-~/.claude/approvals}; APPR="${APPR/#\~/$HOME}"
-TTL=$(read_cfg approval_ttl_seconds); TTL=${TTL:-86400}
-SAMPLING_PAT=$(python3 -c 'import sys,json; d=json.load(open(sys.argv[1])); print("|".join(d.get("sql",{}).get("sampling_patterns",[])))' "$CFG" 2>/dev/null)
+# dotted-path reader; lists are joined with | so they drop straight into grep -E
+read_cfg() { python3 -c 'import sys,json
+d=json.load(open(sys.argv[1]))
+for k in sys.argv[2].split("."):
+    d = d.get(k) if isinstance(d, dict) else None
+print("|".join(d) if isinstance(d,list) else ("" if d is None else d))' "$CFG" "$1" 2>/dev/null; }
+CMD_PAT=$(read_cfg compliance.guard.command_patterns)
+SUBMIT_PAT=$(read_cfg compliance.guard.submit_patterns)
+SUBMIT_REGION=$(read_cfg compliance.guard.submit_region)
+QF_FLAGS=$(read_cfg compliance.guard.query_file_flags); QF_FLAGS=${QF_FLAGS:---query-file|--file}
+APPR=$(read_cfg operations.governance.approvals_dir); APPR=${APPR:-~/.claude/approvals}; APPR="${APPR/#\~/$HOME}"
+TTL=$(read_cfg operations.governance.approval_ttl_seconds); TTL=${TTL:-86400}
+SAMPLING_PAT=$(read_cfg platform.sql.sampling_patterns)
 
 # Bash: look only at the command skeleton (strip quoted strings and heredocs) so mentioning a keyword in text does not trigger
 STRIPPED="$CMD"

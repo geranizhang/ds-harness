@@ -96,7 +96,7 @@ def main():
     ap.add_argument("--n", type=int, default=12)
     a = ap.parse_args()
     cfg = hc.load()
-    name_rx = re.compile(cfg.get("raw_name_pattern") or r"^\d{8}_.+_[A-Za-z]+\.csv$")
+    name_rx = re.compile(hc.get(cfg, "operations.workspace.raw_name_pattern") or r"^\d{8}_.+_[A-Za-z]+\.csv$")
     rc = 0
     if a.topn:
         if not all([a.csv, a.entity_col, a.dim_col, a.expect_dims]):
@@ -112,7 +112,7 @@ def main():
             print(f"OK: top-{len(top)} entities are complete")
     else:
         errs, oks = check_dir(a.topic_dir, a.fix, name_rx)
-        print(f"== raw check {a.topic_dir} adapter={cfg['name']} ==")
+        print(f"== raw check {a.topic_dir} {hc.describe(cfg)} ==")
         for o in oks:
             print("OK:   ", o)
         for e in errs:

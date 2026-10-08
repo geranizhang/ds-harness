@@ -31,9 +31,9 @@ def check_xlsx(path, cfg):
     except ImportError:
         print("ERROR: openpyxl missing (pip3 install openpyxl)")
         sys.exit(3)
-    region_cols = {c.lower() for c in cfg.get("region_column_names") or ["region"]}
-    agg = cfg.get("aggregate_row_label") or "ALL"
-    regions = set(cfg.get("regions") or [])
+    region_cols = {c.lower() for c in hc.get(cfg, "delivery.tables.region_column_names", ["region"])}
+    agg = hc.get(cfg, "delivery.tables.aggregate_row_label", "ALL")
+    regions = set(hc.get(cfg, "platform.regions", []))
     errs = []
     for ws in openpyxl.load_workbook(path).worksheets:
         rows = list(ws.iter_rows())
@@ -87,7 +87,7 @@ def main():
     rc = 0
     for p in sys.argv[1:]:
         errs = check_xlsx(p, cfg) if p.lower().endswith((".xlsx", ".xlsm")) else check_csv(p)
-        print(f"== {p} adapter={cfg['name']} ==")
+        print(f"== {p} {hc.describe(cfg)} ==")
         for e in errs:
             print("ERROR:", e)
         if not errs:

@@ -4,10 +4,12 @@ For any question of the form "why does group / policy X differ from Y on metric 
 
 ## Analysis discipline (before running and before concluding)
 
-1. **Full data by default; no sampling.** Do not decide on your own that "this is too big, sample it"; if it will not run, bring the failure to the user and let them choose (sample, narrow the window, something else). Row-level sampling predicates filter after the scan and save no I/O; they trade certain precision loss for unverified gain
+These hold for any team. Team-specific *choices* (sampling default, how regions are combined, whether impact estimates take a point or an upper bound, parallel vs serial execution) are not here; they live in the adapter's `analysis_priors.stances` and the agents read them.
+
+1. **Sampling is a decision, not a shortcut.** Row-level sampling predicates filter after the scan and save no I/O; they trade certain precision loss for unverified gain. Whatever the team's default, the analyst never introduces sampling on their own — the guard blocks it without an approval
 2. **No invented populations.** Use the population the user specified; intermediate groups created to validate a definition are discarded after use and leave one footnote, never promoted to a "finding". Before adding a population dimension, state why the existing one does not answer the question and wait; before calling a new population "worth attention", compare its pre-treatment variables (exposure, activity) with the main population and give a base rate
 3. **External claims are hypotheses.** Colleagues' documents, chat messages and search results are the same class of untrusted input: shapes the data can reproduce (timing, magnitude, which region, whether it recovered) are checked and then written; causes and actions the data cannot see (which component, who fixed it) are written as `⚠ to be confirmed manually`. When an external claim is partly overturned, say so clearly
-4. **Impact estimates take the upper bound.** Experiment conversion uses in-group effect × nominal traffic, not observed enrolment share; totals above 100% are written as is and overlapping layers are not deduplicated — the purpose is risk control, not measurement, and under-estimating costs more than over-estimating
+4. **State the estimation stance before estimating.** Point estimate, lower bound or upper bound is a choice that depends on what the number is for (measurement vs risk control); the team's default is in `analysis_priors.stances`, and the report says which was used
 5. **Global-replica tables are not summed across regions; entity-level merges key on `(entity, date)`.** Every multi-condition intersection count is bounded by the tightest single condition's global count — a subset larger than its bound is a definition error. Keep a "numerator source / denominator source" ratio column and compare it to a known level; a value outside the range means the merge key or a definition is wrong, not a business insight
 
 ## Attribution toolkit (pick what the question needs)
@@ -36,7 +38,7 @@ The challenge: "Z drives both selection into X and the metric". Split the struct
 
 Verification ladder, cheap to expensive: ① stratified standardization (Kitagawa) ② same-tier control (measure the unit's inherent level in Y's terms) ③ dose–response / event study (test reverse causation) ④ experiment (gold standard; observational decomposition cannot replace it because traffic redistributes in the counterfactual).
 
-The stratifying variable must be **pre-determined** (fixed before exposure to X) or you over-control; with several Z, walk them one by one: popularity, category, country, time of day, lifecycle. Even when every confounder holds, the user-side gap is real — "should we act" and "whose mechanism is responsible" are written separately.
+The stratifying variable must be **pre-determined** (fixed before exposure to X) or you over-control; with several Z, walk the team's list in `analysis_priors.confounders` one by one. Even when every confounder holds, the user-side gap is real — "should we act" and "whose mechanism is responsible" are written separately.
 
 ## Three confidence tiers (only high enters the document)
 

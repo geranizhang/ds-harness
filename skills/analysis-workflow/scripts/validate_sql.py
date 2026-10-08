@@ -36,7 +36,7 @@ BINNING = [
 def check(path, region, cfg, allow_sampling=False, allow_binning=False):
     s = open(path, encoding="utf-8").read()
     errs, warns = [], []
-    sq = cfg.get("sql") or {}
+    sq = hc.get(cfg, "platform.sql", {})
     markers = sq.get("header_markers") or []
     head = "\n".join(s.splitlines()[: int(sq.get("header_lines", 40))])
     missing = [k for k in markers if k not in head]
@@ -48,7 +48,7 @@ def check(path, region, cfg, allow_sampling=False, allow_binning=False):
         for rx, msg in BINNING:
             if rx.search(s):
                 warns.append("grain: " + msg)
-    mod = hc.load_checks_module(cfg)
+    mod = hc.load_module(cfg, "platform.sql.dialect_checks")
     if mod is not None and hasattr(mod, "sql_checks"):
         e2, w2 = mod.sql_checks(s, region)
         errs += list(e2)
@@ -66,12 +66,12 @@ def main():
     ap.add_argument("--allow-binning", action="store_true", help="the header block already declares why binning/percentile/top-N must happen in SQL")
     a = ap.parse_args()
     cfg = hc.load()
-    aliases = (cfg.get("sql") or {}).get("region_aliases") or {}
+    aliases = hc.get(cfg, "platform.region_aliases", {})
     region = aliases.get(a.region, aliases.get(a.region.upper(), a.region)).lower()
     rc = 0
     for f in a.files:
         errs, warns = check(f, region, cfg, a.allow_sampling, a.allow_binning)
-        print(f"== {f} [{region}] adapter={cfg['name']} ==")
+        print(f"== {f} [{region}] {hc.describe(cfg)} ==")
         for e in errs:
             print("ERROR:", e)
         for w in warns:

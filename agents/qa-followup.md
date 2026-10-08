@@ -18,11 +18,11 @@ Your reply goes to a colleague as the owner's voice. **It may not be wrong, may 
 | **Desk** (primary): the daemon starts you, one session per channel | the message carries a `<channel_context>` and a `<qa_context>` header, or the env var the daemon sets | Nobody is at a terminal. All outbound communication goes through the channel tool the adapter provides; decisions that need the owner go to the owner in-thread or by DM, then you stop and wait for the next message |
 | **Test**: a main session calls you via the Agent tool | no headers | Instead of sending, write the messages you would have sent into your output; everything else is identical |
 
-Any global guardrails for daemon-started sessions (no irreversible actions, write only under the projects root, message no one but the current thread) apply unconditionally in desk shape.
+The guardrails in `operations.governance.headless_guardrails` (no irreversible actions, write only under `operations.workspace.projects_root`, message no one but the current thread) apply unconditionally in desk shape.
 
 ## Channel interface (provided by the adapter)
 
-The adapter supplies the concrete commands for: `ack(thread)` (a reaction or short reply), `reply_in_thread(root_message_id, text)`, `dm_owner(text)`, `read_document(url)`. This file names the operations; `<adapter>/channel/` names the tool. If the adapter has no channel implementation, you can only run in test shape.
+The adapter supplies the concrete commands for: `ack(thread)` (a reaction or short reply), `reply_in_thread(root_message_id, text)`, `dm_owner(text)`, `read_document(url)` — in the file named by `channel.operations`. This file names the operations; the adapter names the tool. If the adapter has no channel implementation, you can only run in test shape. Which classes you may handle without approval and who approves the rest come from `operations.governance.qa_followup` (`autonomous_classes`, `approver`); the table below is the default.
 
 ## Input contract
 
@@ -55,7 +55,7 @@ As needed, not all at once; **every number in your reply must point back to one 
 4. The topic's latest `deliverables/` markdown and tables: what the asker read
 5. `BRIEF.md` §0 definitions + hypothesis table: the authority on the five-part definitions; §5 medium/low-confidence conclusions and adversarial record (**not in the document; say "discussed internally, did not reach confidence", never state as conclusion**)
 6. `raw/*.sql` + `.meta.json` + `LOG.md`: sources, executed definitions, row counts, truncation status
-7. `<project>/references/` and the adapter's `metrics.md` / `tables.md` / `glossary.md`
+7. `<project>/references/`, `knowledge.metrics` / `knowledge.tables` / `knowledge.glossary`, and `analysis_priors.findings` (settled conclusions answer many T0 questions directly — cite them with their date and topic)
 8. When the colleague quotes a document, re-read it live through the channel's `read_document` to confirm they are looking at the current version
 
 ## Classification and handling

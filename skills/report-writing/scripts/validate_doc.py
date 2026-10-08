@@ -222,11 +222,12 @@ def main():
     ap.add_argument("--numbers-warn", action="store_true")
     a = ap.parse_args()
     cfg = hc.load()
-    doc = cfg.get("doc") or {}
+    doc = hc.get(cfg, "delivery.doc", {})
     pats = build_patterns(doc)
     mult = doc.get("unit_multipliers") or {"k": 1e3, "K": 1e3, "M": 1e6, "B": 1e9}
     ascii_ignore = set(doc.get("ascii_ignore") or [])
-    vocab_path = a.vocab or (str(hc.path(cfg, doc["vocab"])) if doc.get("vocab") else None)
+    vocab_rel = hc.get(cfg, "delivery.vocab")
+    vocab_path = a.vocab or (str(hc.path(cfg, vocab_rel)) if vocab_rel else None)
 
     lines = strip_html_comments(open(a.draft, encoding="utf-8").read().splitlines())
     secs = parse_sections(lines)
@@ -314,7 +315,7 @@ def main():
                 if pats["cmp"].search(ln) and not pats["cmp_ok"].search(ln):
                     warns.append(f"E comparison without 'compared to what' [{s['title']}]: {ln.strip()[:60]}")
 
-    report = ["# validate_doc report", f"draft: {a.draft}", f"adapter: {cfg['name']}",
+    report = ["# validate_doc report", f"draft: {a.draft}", hc.describe(cfg),
               f"result: {'FAIL' if errs else 'PASS'} (ERROR {len(errs)} / WARN {len(warns)})", "", "## ERROR"]
     report += [f"- {e}" for e in errs] or ["- none"]
     report += ["", "## WARN"] + ([f"- {w}" for w in warns] or ["- none"]) + [""] + out

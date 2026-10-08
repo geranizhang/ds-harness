@@ -41,12 +41,12 @@ def terms_from_ref(path, pats, ignore):
 def main():
     dry = "--dry-run" in sys.argv
     cfg = hc.load()
-    doc = cfg.get("doc") or {}
+    doc = hc.get(cfg, "delivery.doc", {})
     pats = build_patterns(doc)
     ignore = set(doc.get("ascii_ignore") or [])
-    out = hc.path(cfg, doc.get("vocab", "vocab.txt"))
+    out = hc.path(cfg, hc.get(cfg, "delivery.vocab", "delivery/vocab.txt"))
     auto = set()
-    for pattern in doc.get("vocab_sources") or []:
+    for pattern in hc.get(cfg, "delivery.vocab_sources", []):
         for f in glob.glob(str(hc.path(cfg, pattern))):
             auto |= terms_from_ref(f, pats, ignore)
     auto = {t for t in auto if len(t) >= 2 and not t.isdigit()}

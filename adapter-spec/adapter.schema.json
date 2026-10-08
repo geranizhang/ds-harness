@@ -1,0 +1,163 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ds-harness adapter",
+  "type": "object",
+  "required": ["spec_version", "name", "platform", "delivery", "operations"],
+  "properties": {
+    "spec_version": {"const": "0.2"},
+    "name": {"type": "string", "pattern": "^[a-z0-9_-]+$"},
+    "display_name": {"type": "string"},
+    "language": {"type": "string"},
+
+    "platform": {
+      "type": "object",
+      "required": ["regions", "default_regions", "sql"],
+      "properties": {
+        "regions": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "default_regions": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "region_aliases": {"type": "object", "additionalProperties": {"type": "string"}},
+        "tools": {"type": "object", "properties": {"query_cli": {"type": ["string", "null"]}, "mcp_server": {"type": ["string", "null"]}}},
+        "fetch_limits": {"type": "object"},
+        "sql": {
+          "type": "object",
+          "required": ["header_markers"],
+          "properties": {
+            "header_markers": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+            "header_lines": {"type": "integer", "minimum": 1},
+            "sampling_patterns": {"type": "array", "items": {"type": "string"}},
+            "dialect_checks": {"type": ["string", "null"]}
+          }
+        },
+        "runbooks": {"type": "object", "additionalProperties": {"type": "string"}},
+        "setup": {"type": ["string", "null"]}
+      }
+    },
+
+    "compliance": {
+      "type": "object",
+      "properties": {
+        "red_lines": {"type": ["string", "null"]},
+        "column_pool": {"type": ["string", "null"]},
+        "guard": {
+          "type": "object",
+          "properties": {
+            "command_patterns": {"type": "array", "items": {"type": "string"}},
+            "submit_patterns": {"type": "array", "items": {"type": "string"}},
+            "submit_region": {"type": ["string", "null"]},
+            "query_file_flags": {"type": "array", "items": {"type": "string"}},
+            "tests": {"type": "object"}
+          }
+        }
+      }
+    },
+
+    "channel": {
+      "type": "object",
+      "properties": {
+        "metadata_assistant": {"type": ["string", "null"]},
+        "operations": {"type": ["string", "null"]},
+        "secrets_env": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+
+    "knowledge": {
+      "type": "object",
+      "properties": {
+        "tables": {"type": "string"}, "metrics": {"type": "string"}, "glossary": {"type": "string"}
+      }
+    },
+
+    "analysis_priors": {
+      "type": "object",
+      "properties": {
+        "domain": {"type": "string"}, "findings": {"type": "string"}, "hypotheses": {"type": "string"},
+        "confounders": {"type": "string"}, "stances": {"type": "string"}
+      }
+    },
+
+    "delivery": {
+      "type": "object",
+      "required": ["doc", "tables"],
+      "properties": {
+        "conventions": {"type": ["string", "null"]},
+        "exemplars": {"type": "string"},
+        "vocab": {"type": "string"},
+        "vocab_sources": {"type": "array", "items": {"type": "string"}},
+        "tables": {
+          "type": "object",
+          "required": ["aggregate_row_label", "region_column_names"],
+          "properties": {
+            "aggregate_row_label": {"type": "string"},
+            "region_column_names": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "doc": {
+          "type": "object",
+          "required": ["section_background", "section_conclusions"],
+          "properties": {
+            "section_background": {"type": "array", "items": {"type": "string"}},
+            "section_conclusions": {"type": "array", "items": {"type": "string"}},
+            "section_skip": {"type": "array", "items": {"type": "string"}},
+            "forbidden_sections": {"type": "array", "items": {"type": "string"}},
+            "confidence_label_patterns": {"type": "array", "items": {"type": "string"}},
+            "colloquial_words": {"type": "array", "items": {"type": "string"}},
+            "colloquial_extra_regex": {"type": ["string", "null"]},
+            "invented_words": {"type": "array", "items": {"type": "string"}},
+            "control_column_patterns": {"type": "array", "items": {"type": "string"}},
+            "term_suffixes": {"type": "array", "items": {"type": "string"}},
+            "cjk_suffix_terms": {"type": "boolean"},
+            "ascii_ignore": {"type": "array", "items": {"type": "string"}},
+            "comparison_words": {"type": "array", "items": {"type": "string"}},
+            "comparison_ok": {"type": "array", "items": {"type": "string"}},
+            "number_units": {"type": "array", "items": {"type": "string"}},
+            "unit_multipliers": {"type": "object", "additionalProperties": {"type": "number"}},
+            "number_skip_patterns": {"type": "array", "items": {"type": "string"}}
+          }
+        }
+      }
+    },
+
+    "operations": {
+      "type": "object",
+      "required": ["workspace", "governance"],
+      "properties": {
+        "workspace": {
+          "type": "object",
+          "required": ["projects_root", "raw_name_pattern"],
+          "properties": {
+            "projects_root": {"type": "string"},
+            "raw_name_pattern": {"type": "string"},
+            "versions_columns": {"type": "array", "items": {"type": "string"}},
+            "commit_raw_to_git": {"type": "boolean"}
+          }
+        },
+        "governance": {
+          "type": "object",
+          "properties": {
+            "approvals_dir": {"type": "string"},
+            "approval_ttl_seconds": {"type": "integer", "minimum": 1},
+            "gates": {"type": "object", "additionalProperties": {"enum": ["human", "preauthorized"]}},
+            "qa_followup": {
+              "type": "object",
+              "properties": {
+                "autonomous_classes": {"type": "array", "items": {"enum": ["T0", "T1", "T2", "T4"]}},
+                "approver": {"enum": ["owner", "any_member"]}
+              }
+            },
+            "headless_guardrails": {"type": ["string", "null"]}
+          }
+        }
+      }
+    },
+
+    "evals": {
+      "type": "object",
+      "properties": {"cases": {"type": ["string", "null"]}, "corrections": {"type": ["string", "null"]}}
+    },
+
+    "extensions": {
+      "type": "object",
+      "properties": {"skills": {"type": ["string", "null"]}, "agents": {"type": ["string", "null"]}}
+    }
+  }
+}

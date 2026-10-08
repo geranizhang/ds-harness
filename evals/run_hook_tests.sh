@@ -14,11 +14,12 @@ A="${DS_HARNESS_ADAPTER_DIR:-$CLAUDE_PLUGIN_ROOT/adapters/${DS_HARNESS_ADAPTER:-
 j() { python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); v=d
 for k in sys.argv[2].split("."): v=(v or {}).get(k)
 print("" if v is None else (" ".join(v) if isinstance(v,list) else v))' "$A/adapter.json" "$1"; }
-HDR=$(j sql.header_markers); CLI=$(j guard.tests.cli); QCMD=$(j guard.tests.query_cmd); RO=$(j guard.tests.readonly_cmd)
-SUBF=$(j guard.tests.submit_file_cmd); SUBID=$(j guard.tests.submit_id_cmd); BAD=$(j guard.tests.bad_sql); GOOD=$(j guard.tests.good_sql)
-APPR=$(python3 -c 'import os; print(os.path.expanduser("'"$(j guard.approvals_dir)"'" or "~/.claude/approvals"))')
-TOOL=$(j guard.tests.mcp_tool); TOOL=${TOOL:-Bash}
-[ -n "$CLI" ] && [ -n "$QCMD" ] || { echo "adapter.json guard.tests needs at least cli and query_cmd"; exit 2; }
+G=compliance.guard.tests
+HDR=$(j platform.sql.header_markers); CLI=$(j $G.cli); QCMD=$(j $G.query_cmd); RO=$(j $G.readonly_cmd)
+SUBF=$(j $G.submit_file_cmd); SUBID=$(j $G.submit_id_cmd); BAD=$(j $G.bad_sql); GOOD=$(j $G.good_sql)
+APPR=$(python3 -c 'import os; print(os.path.expanduser("'"$(j operations.governance.approvals_dir)"'" or "~/.claude/approvals"))')
+TOOL=$(j $G.mcp_tool); TOOL=${TOOL:-Bash}
+[ -n "$CLI" ] && [ -n "$QCMD" ] || { echo "adapter.json compliance.guard.tests needs at least cli and query_cmd"; exit 2; }
 T=$(mktemp -d); rm -rf "$APPR"; pass=0; fail=0
 t() { # want tool command label [grep]
   printf '{"tool_name":"%s","tool_input":{"command":%s}}' "$2" "$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$3")" | bash "$H" >"$T/out" 2>&1

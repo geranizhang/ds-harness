@@ -18,7 +18,7 @@ The output is one **BRIEF.md** — the hypothesis tree (mind map) for this topic
 - **Scope**: dates, regions, product surface, traffic source, population. Ask about anything vague; do not assume
 
 ### 2. Hypotheses
-Every hypothesis carries three parts, none optional:
+Start from the adapter: `analysis_priors.hypotheses` (recurring hypotheses for this class of question and how they were tested), `analysis_priors.findings` (what is already settled — cite, do not re-test), `analysis_priors.domain` (how the system works). Then every hypothesis carries three parts, none optional:
 
 | Part | Form |
 |---|---|
@@ -32,7 +32,7 @@ After the analysis, three more columns are back-filled **in the BRIEF itself, no
 - Attribution questions use the toolkit in `analysis-workflow/references/analysis-patterns.md`; do not reinvent it
 
 ### 3. Dimensions
-Walk the generic list and write **why each chosen dimension might carry signal** (which hypothesis it hangs on); never split for the sake of splitting:
+Walk the team's taxonomy in `analysis_priors.confounders` (default dimensions, standard confounders, default control variable) and write **why each chosen dimension might carry signal** (which hypothesis it hangs on); never split for the sake of splitting. The generic list below is the fallback when the adapter has none:
 
 - demand side: region / country, user tiers (activity / tenure / age)
 - supply side: producer region / country, producer tiers (popularity / quality / lifecycle)
