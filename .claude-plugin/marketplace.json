@@ -1,0 +1,14 @@
+{
+  "name": "ds-harness",
+  "owner": {
+    "name": "geranizhang"
+  },
+  "plugins": [
+    {
+      "name": "ds-harness",
+      "source": "./",
+      "description": "Data-analysis harness for Claude Code: hypothesis brief → data retrieval agent → adversarial review → report writer, with four human gates, deterministic validators and an environment-level guard. Bring your own adapter.",
+      "version": "0.2.0"
+    }
+  ]
+}
