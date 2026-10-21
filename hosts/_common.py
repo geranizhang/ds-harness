@@ -88,7 +88,7 @@ def parse_agent(path: Path):
     for line in parts[1].splitlines():
         m = re.match(r"^(\w+):\s*(.*)$", line)
         if m:
-            fields[m.group(1)] = m.group(2).strip()
+            fields[m.group(1)] = m.group(2).strip().strip("'\"")   # front matter values may be quoted
     return fields, parts[2]
 
 
