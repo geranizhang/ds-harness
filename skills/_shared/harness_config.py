@@ -25,7 +25,10 @@ def harness_root() -> Path:
     return Path(env) if env else REPO_ROOT
 
 
-POINTER = Path.home() / ".claude" / "ds-harness-adapter"  # written by bin/install.sh; one line, the adapter path
+POINTERS = [  # written by bin/install.sh (Claude Code) and bin/install-codex.sh (Codex); both hold the same adapter path
+    Path.home() / ".claude" / "ds-harness-adapter",
+    Path.home() / ".codex" / "ds-harness-adapter",
+]
 
 
 def adapter_dir() -> Path:
@@ -34,10 +37,11 @@ def adapter_dir() -> Path:
         return Path(d).expanduser()
     if os.environ.get("DS_HARNESS_ADAPTER"):
         return harness_root() / "adapters" / os.environ["DS_HARNESS_ADAPTER"]
-    if POINTER.exists():
-        p = POINTER.read_text(encoding="utf-8").strip()
-        if p:
-            return Path(p).expanduser()
+    for pointer in POINTERS:
+        if pointer.exists():
+            p = pointer.read_text(encoding="utf-8").strip()
+            if p:
+                return Path(p).expanduser()
     return harness_root() / "adapters" / "_template"
 
 

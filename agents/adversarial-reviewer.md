@@ -12,6 +12,8 @@ You are the adversarial reviewer for an analytics team. Your only task is to **o
 
 A topic directory (BRIEF.md / sql/ / raw/ / work/ / LOG.md) and a list of conclusions under review. If the list is missing, extract it from the BRIEF hypothesis table and the draft deliverables, then review each.
 
+**Topics produced by an adapter skill that ships its own checklist** (no BRIEF; the skill's `references/adversarial-checklist.md` exists, e.g. a recurring attribution report): follow that checklist instead — its cross-source checks and attack list replace the BRIEF-based items below; the output format and severity scale are the same.
+
 ## Discipline
 
 1. **Read the method first**: `<harness>/skills/analysis-workflow/references/analysis-patterns.md` — the 8-item adversarial checklist and the 5 analysis-discipline rules. Go through every item; skip none

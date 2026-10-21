@@ -14,6 +14,6 @@ Rule text in the core carries no dates; when and why a rule changed is recorded 
 ## 0.1.0 — 2026-10
 
 - Extracted from a single-team setup (that team's adapter lives in its own private repository). Core/adapter split: flow, gates, agents, validators and hook are core; platform runbooks, table handbook, metric dictionary, exemplars, vocabulary and channel scripts are adapter.
-- Agents renamed: `sql-artist` → `data-runner`, `doc-reporter` → `report-writer`. Skills renamed: `tt-live-analytics` → `analysis-workflow`, `ds-report-structure` → `analysis-brief`, `data-report-docing` → `report-writing`.
+- Agents renamed: `sql-artist` → `data-runner`, `doc-reporter` → `report-writer`. Skills renamed from the originating team's names to `analysis-workflow`, `analysis-brief`, `report-writing`.
 - All validators read `adapter.json`; dialect and compliance checks moved to the adapter's `checks.py`; the guard hook reads the adapter's guard section.
 - Core text in English; adapter content keeps its team's language.
