@@ -25,7 +25,9 @@ def main(host_name):
         sys.exit(1)
     adapter = Path(ptr.read_text().strip())
     cfg = c.load_adapter(adapter)
-    check((c.POINTER_DIR / "host").read_text().strip() == host_name if (c.POINTER_DIR / "host").exists() else False, f"host pointer = {host_name}")
+    hosts_f = c.POINTER_DIR / "hosts"
+    installed = hosts_f.read_text().split() if hosts_f.exists() else ([(c.POINTER_DIR / "host").read_text().strip()] if (c.POINTER_DIR / "host").exists() else [])
+    check(host_name in installed, f"host {host_name} recorded in {hosts_f} ({', '.join(installed) or 'none'})")
     man = c.manifest_path(host_name)
     links = [Path(l) for l in man.read_text().splitlines() if l.strip()] if man.exists() else []
     check(links, f"manifest {man} ({len(links)} entries)")

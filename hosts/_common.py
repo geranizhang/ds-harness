@@ -111,7 +111,12 @@ def mcp_invocation(decl: dict):
 def write_pointer(host: str, adapter_dir: Path, profile: Path = None):
     POINTER_DIR.mkdir(parents=True, exist_ok=True)
     (POINTER_DIR / "adapter").write_text(str(adapter_dir) + "\n", encoding="utf-8")
-    (POINTER_DIR / "host").write_text(host + "\n", encoding="utf-8")
+    (POINTER_DIR / "host").write_text(host + "\n", encoding="utf-8")          # last installed host
+    hosts_f = POINTER_DIR / "hosts"                                            # every host installed on this machine
+    hosts = [h for h in hosts_f.read_text(encoding="utf-8").split() if h] if hosts_f.exists() else []
+    if host not in hosts:
+        hosts.append(host)
+    hosts_f.write_text("\n".join(hosts) + "\n", encoding="utf-8")
     (POINTER_DIR / "harness").write_text(str(CORE) + "\n", encoding="utf-8")
     if profile:
         (POINTER_DIR / "profile").write_text(str(profile) + "\n", encoding="utf-8")

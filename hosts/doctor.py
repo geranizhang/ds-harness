@@ -15,13 +15,17 @@ STALE_DAYS = 90
 
 def main():
     ptr = c.POINTER_DIR
-    host = (ptr / "host").read_text().strip() if (ptr / "host").exists() else None
-    if not host:
+    hosts = (ptr / "hosts").read_text().split() if (ptr / "hosts").exists() else \
+        ([(ptr / "host").read_text().strip()] if (ptr / "host").exists() else [])
+    if not hosts:
         print(f"FAIL no install found ({ptr}/host missing); run bin/install.sh --host <host> --adapter <dir>")
         sys.exit(1)
-    print(f"== host: {host}  adapter: {(ptr / 'adapter').read_text().strip()}")
-    r = subprocess.run([sys.executable, str(c.HERE / "verify.py"), host], text=True)
-    ok = r.returncode == 0
+    print(f"== hosts: {', '.join(hosts)}  adapter: {(ptr / 'adapter').read_text().strip()}")
+    ok = True
+    for host in hosts:
+        print(f"-- verify {host}")
+        r = subprocess.run([sys.executable, str(c.HERE / "verify.py"), host], text=True)
+        ok &= r.returncode == 0
     cfg = c.load_adapter((ptr / "adapter").read_text().strip())
     src = c.hc.get(cfg, "knowledge.sources")
     if src:
