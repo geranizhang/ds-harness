@@ -1,0 +1,10 @@
+{
+  "name": "claude-code",
+  "skills_dir": "~/.claude/skills",
+  "agents_dir": "~/.claude/agents",
+  "agent_format": "md",
+  "hooks": {"file": "~/.claude/settings.json", "event": "PreToolUse", "stdin": "claude", "guard_link": "~/.claude/hooks/ds-harness-guard.sh"},
+  "tools": {"file": "~/.claude.json", "format": "json-mcpServers"},
+  "legacy_pointer": "~/.claude/ds-harness-adapter",
+  "capabilities": {"subagents": true, "hooks": true, "mcp": true}
+}

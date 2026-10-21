@@ -59,7 +59,8 @@ skills/              analysis-brief · analysis-workflow (+ analysis-patterns, w
 agents/              data-runner · adversarial-reviewer · report-writer · qa-followup
 hooks/               PreToolUse guard, configured by the adapter
 evals/               validator regression · hook regression · corrections ledger tooling
-bin/install.sh       install core + one adapter into ~/.claude as one workflow
+bin/install.sh       one entry point: --host <claude-code|codex> --adapter <dir>; host bindings under hosts/<host>/
+hosts/               one directory per agent host: host.json (where things go, capabilities) + install.py; verify.py checks an install
 docs/                DESIGN.md (core/adapter split) · ADAPTER.md (walkthrough)
 ```
 
@@ -68,10 +69,10 @@ docs/                DESIGN.md (core/adapter split) · ADAPTER.md (walkthrough)
 ```bash
 git clone <this repo> ds-harness
 cp -R ds-harness/adapters/_template /path/to/my-team      # fill it in (docs/ADAPTER.md)
-ds-harness/bin/install.sh /path/to/my-team
+ds-harness/bin/install.sh --host claude-code --adapter /path/to/my-team   # or --host codex
 ```
 
-The installer symlinks core skills, agents and the hook into `~/.claude`, links the adapter's own skills and agents beside them, and writes `~/.claude/ds-harness-adapter` so scripts and agents find the adapter without environment variables. Open a new session afterwards. `bin/install.sh --uninstall` reverses it.
+The host binding links core and adapter skills, renders the agents in the host's format (Claude Code: the `.md` as is; Codex: `.toml`), registers the guard hook and any MCP tools the adapter declares, and writes `~/.ds-harness/adapter` so scripts, hook and agents find the adapter without environment variables on every host. Design: `docs/ARCHITECTURE-0.3.md`. Open a new session afterwards. `bin/install.sh --uninstall` reverses it.
 
 Team adapters are private by design: keep yours in its own repository. `adapters/*` other than `_template` is git-ignored here.
 

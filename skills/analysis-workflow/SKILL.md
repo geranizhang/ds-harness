@@ -24,7 +24,7 @@ The adapter (`adapter-spec/README.md`, eight extension points, read through `ada
 
 Core references in this skill: `references/analysis-patterns.md` (attribution toolkit, discipline, confidence tiers, adversarial checklist), `references/workspace-conventions.md` (directory skeleton, provenance, ledgers, git), `scripts/` (`validate_sql.py`, `validate_raw.py`).
 
-`<adapter>` resolves from `DS_HARNESS_ADAPTER_DIR`, else `~/.codex/ds-harness-adapter` in Codex or `~/.claude/ds-harness-adapter` in Claude Code, else `<harness>/adapters/$DS_HARNESS_ADAPTER`, else the template. Without an adapter the flow still runs, but every platform-specific check reports "fill in your adapter". What the references do not contain does not mean it does not exist — go through §2 and write back what you find.
+`<adapter>` resolves from `DS_HARNESS_ADAPTER_DIR`, else `~/.ds-harness/adapter` (written by the installer for any host), else `<harness>/adapters/$DS_HARNESS_ADAPTER`, else the template. Without an adapter the flow still runs, but every platform-specific check reports "fill in your adapter". What the references do not contain does not mean it does not exist — go through §2 and write back what you find.
 
 ## Roles
 

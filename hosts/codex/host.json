@@ -1,0 +1,11 @@
+{
+  "name": "codex",
+  "skills_dir": "~/.agents/skills",
+  "agents_dir": "~/.codex/agents",
+  "agent_format": "toml",
+  "hooks": {"file": "~/.codex/hooks.json", "event": "PreToolUse", "stdin": "unknown", "note": "not yet verified that Codex passes tool_input.command / query_file the way guard.sh parses; test with a sampling query"},
+  "tools": {"file": "~/.codex/config.toml", "format": "toml-mcp_servers"},
+  "legacy_pointer": "~/.codex/ds-harness-adapter",
+  "skill_backups": "~/.agents/skill-backups",
+  "capabilities": {"subagents": true, "hooks": true, "mcp": true}
+}

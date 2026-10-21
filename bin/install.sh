@@ -1,60 +1,44 @@
 #!/bin/bash
-# Install ds-harness (core) + one adapter into ~/.claude as loose files, so the result behaves as one named workflow.
+# ds-harness installer: one entry point, one host binding per directory under hosts/.
 #
-#   bin/install.sh <adapter_dir>            install core skills/agents/hook + the adapter's extensions; record the adapter path
-#   bin/install.sh --uninstall              remove what a previous install linked (leaves user content alone)
+#   bin/install.sh --host claude-code --adapter /path/to/adapter [--profile ~/.ds-harness/profile.json]
+#   bin/install.sh --host codex       --adapter /path/to/adapter
+#   bin/install.sh --uninstall [--host <host>]        remove what the manifest for that host lists; pointers kept unless --all
+#   bin/install.sh <adapter_dir>                      0.2 form: same as --host claude-code --adapter <adapter_dir>
 #
-# What it does:
-#   ~/.claude/skills/<name>   → symlink to core skills (analysis-brief, analysis-workflow, report-writing, _shared) and adapter skills/*
-#   ~/.claude/agents/<name>.md→ symlink to core agents and adapter agents/*.md
-#   ~/.claude/hooks/ds-harness-guard.sh → symlink to hooks/guard.sh; a PreToolUse entry is added to ~/.claude/settings.json if absent
-#   ~/.claude/ds-harness-adapter          → one line: the adapter path (read by scripts, hook and agents when no env var is set)
-# Symlinks mean edits in the repositories are live immediately; nothing is copied.
+# The host binding (hosts/<host>/install.py) links skills, renders agents, registers the hook and the declared tools, and
+# writes ~/.ds-harness/{adapter,host[,profile]}; scripts, hook and agents resolve the adapter from there.
 set -e
 CORE="$(cd "$(dirname "$0")/.." && pwd)"
-CL="$HOME/.claude"
-MANIFEST="$CL/ds-harness.installed"
-
-link() { # src dst
-  mkdir -p "$(dirname "$2")"
-  if [ -e "$2" ] && [ ! -L "$2" ]; then echo "  skip (exists, not a symlink): $2"; return; fi
-  ln -sfn "$1" "$2"; echo "$2" >> "$MANIFEST"; echo "  $2 -> $1"
-}
-
-if [ "$1" = "--uninstall" ]; then
-  [ -f "$MANIFEST" ] || { echo "nothing installed"; exit 0; }
-  while read -r p; do [ -L "$p" ] && rm "$p" && echo "  removed $p"; done < "$MANIFEST"
-  rm -f "$MANIFEST" "$CL/ds-harness-adapter"
-  echo "uninstalled (settings.json hook entry left in place; remove by hand if desired)"; exit 0
+HOST=""; ADAPTER=""; PROFILE=""; UNINSTALL=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --host) HOST="$2"; shift 2;;
+    --adapter) ADAPTER="$2"; shift 2;;
+    --profile) PROFILE="$2"; shift 2;;
+    --uninstall) UNINSTALL=1; shift;;
+    -h|--help) sed -n 2,10p "$0"; exit 0;;
+    *) [ -z "$ADAPTER" ] && ADAPTER="$1"; shift;;
+  esac
+done
+PTR="$HOME/.ds-harness"
+if [ "$UNINSTALL" = 1 ]; then
+  HOST="${HOST:-$(cat "$PTR/host" 2>/dev/null || echo claude-code)}"
+  M="$PTR/installed.$HOST"; [ -f "$M" ] || { echo "nothing installed for host $HOST"; exit 0; }
+  while read -r p; do
+    if [ -L "$p" ]; then rm "$p" && echo "  removed link $p"
+    elif [ -f "$p" ] && [ "$HOST" != "claude-code" ]; then rm "$p" && echo "  removed $p"; fi
+  done < "$M"
+  rm -f "$M"; echo "uninstalled $HOST (hook entries and tool registrations left in place; pointers in $PTR kept)"; exit 0
 fi
-
-ADAPTER="$(cd "${1:?usage: install.sh <adapter_dir> | --uninstall}" && pwd)"
+HOST="${HOST:-claude-code}"
+[ -f "$CORE/hosts/$HOST/host.json" ] || { echo "unknown host '$HOST'; available: $(ls "$CORE/hosts" | grep -v '^_' | grep -v '\.py$' | tr '\n' ' ')"; exit 1; }
+[ -n "$ADAPTER" ] || { echo "usage: install.sh --host <host> --adapter <adapter_dir>"; exit 1; }
+ADAPTER="$(cd "$ADAPTER" && pwd)"
 [ -f "$ADAPTER/adapter.json" ] || { echo "no adapter.json in $ADAPTER"; exit 1; }
 NAME=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["name"])' "$ADAPTER/adapter.json")
-: > "$MANIFEST"
-echo "installing ds-harness core + adapter '$NAME'"
-
-echo "skills:"
-for s in analysis-brief analysis-workflow report-writing _shared; do link "$CORE/skills/$s" "$CL/skills/$s"; done
-for s in "$ADAPTER"/skills/*/; do [ -d "$s" ] && [ -f "$s/SKILL.md" ] && link "${s%/}" "$CL/skills/$(basename "$s")"; done
-echo "agents:"
-for a in "$CORE"/agents/*.md; do link "$a" "$CL/agents/$(basename "$a")"; done
-for a in "$ADAPTER"/agents/*.md; do [ -f "$a" ] && link "$a" "$CL/agents/$(basename "$a")"; done
-echo "hook:"
-link "$CORE/hooks/guard.sh" "$CL/hooks/ds-harness-guard.sh"
-python3 - "$CL/settings.json" <<'EOF'
-import json, sys, os
-p = sys.argv[1]
-d = json.load(open(p)) if os.path.exists(p) else {}
-entry = {"matcher": "Bash|mcp__.*__run_command", "hooks": [{"type": "command", "command": "bash ~/.claude/hooks/ds-harness-guard.sh"}]}
-pre = d.setdefault("hooks", {}).setdefault("PreToolUse", [])
-if not any("ds-harness-guard" in json.dumps(e) for e in pre):
-    pre.append(entry); json.dump(d, open(p, "w"), ensure_ascii=False, indent=2); open(p, "a").write("\n"); print("  settings.json: PreToolUse entry added")
-else:
-    print("  settings.json: PreToolUse entry present")
-EOF
-echo "$ADAPTER" > "$CL/ds-harness-adapter"
-echo "adapter pointer: $CL/ds-harness-adapter -> $ADAPTER"
-echo
-echo "done. Open a new Claude Code session to load the skills and agents."
-echo "Optional, for shells that run the scripts directly: export DS_HARNESS_ADAPTER_DIR=$ADAPTER"
+echo "installing ds-harness core + adapter '$NAME' for host '$HOST'"
+python3 "$CORE/hosts/$HOST/install.py" "$ADAPTER"
+if [ -n "$PROFILE" ]; then echo "$PROFILE" > "$PTR/profile"; echo "  $PTR/profile -> $PROFILE (profile overlay arrives with spec 0.3)"; fi
+echo; python3 "$CORE/hosts/verify.py" "$HOST" || true
+echo; echo "done. Open a new $HOST session to load the skills and agents."

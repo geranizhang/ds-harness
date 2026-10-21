@@ -45,7 +45,7 @@ English: [README.md](README.md)
 
 ```bash
 cp -R ds-harness/adapters/_template /path/to/my-team   # 按 docs/ADAPTER.md 填
-ds-harness/bin/install.sh /path/to/my-team              # 核心 + adapter 一起装进 ~/.claude
+ds-harness/bin/install.sh --host claude-code --adapter /path/to/my-team   # 或 --host codex；宿主绑定在 hosts/<host>/
 ```
 
 团队 adapter 默认私有，放自己的仓库；本仓库 `adapters/` 下除 `_template` 外均被 git 忽略。

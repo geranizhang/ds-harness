@@ -40,12 +40,12 @@ At this point the workflow runs end to end on your platform.
 ## 5. Install and verify
 
 ```bash
-bin/install.sh /path/to/<your-team>
+bin/install.sh --host claude-code --adapter /path/to/<your-team>    # or --host codex
 DS_HARNESS_ADAPTER_DIR=/path/to/<your-team> python3 evals/run_validators.py
 DS_HARNESS_ADAPTER_DIR=/path/to/<your-team> bash evals/run_hook_tests.sh
 ```
 
-The installer symlinks core and adapter into `~/.claude` and writes `~/.claude/ds-harness-adapter`; scripts, the hook and the agents resolve the adapter from that pointer when no env var is set.
+The host binding (`hosts/<host>/install.py`) links core and adapter skills, renders agents in the host's format, registers the hook and declared tools, and writes `~/.ds-harness/adapter`; scripts, the hook and the agents resolve the adapter from that pointer on any host when no env var is set. `hosts/verify.py <host>` checks the result.
 
 ## 6. Keep it alive
 

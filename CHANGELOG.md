@@ -2,6 +2,11 @@
 
 Rule text in the core carries no dates; when and why a rule changed is recorded here. Adapter rule changes go in the adapter's own `CHANGELOG.md`.
 
+## 0.3.0-dev (unreleased)
+
+- Host bindings: `hosts/<host>/host.json` + `install.py` (claude-code, codex); `bin/install.sh --host <h> --adapter <dir>` is the one entry point and `bin/install-codex.sh` is gone; `hosts/verify.py` checks an install. One pointer directory `~/.ds-harness/{adapter,host}` for every host; 0.2 pointers still read. `platform.tools` may be a list of declarations (spec 0.3 draft: command / args / env / resolve / health_check) that the host registers; the 0.2 two-name form still works. Design: `docs/ARCHITECTURE-0.3.md`.
+- Claim ladder (descriptive / decomposition / causal), selection mechanism and generating-stories table in `analysis-brief`; `validate_doc` check F; adversarial-reviewer audits them; strip-top-1% recompute.
+
 ## 0.2.0 — 2026-10
 
 - Adapter spec 0.2: eight explicit extension points (platform, compliance, channel, knowledge, analysis-priors, delivery, operations, evals) plus extensions; `adapter-spec/` carries the contract and a JSON schema; `adapter.json` is nested by slot and read through `harness_config.get()`.

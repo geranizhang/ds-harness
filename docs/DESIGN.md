@@ -34,7 +34,7 @@ A rule belongs in the core if and only if it holds for *any* data team. Swap the
 
 ## Resolution
 
-- `DS_HARNESS_ADAPTER_DIR=/abs/path`, else `DS_HARNESS_ADAPTER=<name>` (→ `<plugin root>/adapters/<name>`), else the path in `~/.claude/ds-harness-adapter` (written by `bin/install.sh`), else `_template`
+- `DS_HARNESS_ADAPTER_DIR=/abs/path`, else `DS_HARNESS_ADAPTER=<name>` (→ `<plugin root>/adapters/<name>`), else the path in `~/.ds-harness/adapter` (written by `bin/install.sh` for any host; the 0.2 per-host pointers are still read), else `_template`. Host bindings and the planned profile layer: `ARCHITECTURE-0.3.md`
 - Adapter spec 0.2: `adapter.json` is nested by the eight extension points (`adapter-spec/README.md`); agents and scripts read it by dotted path (`knowledge.tables`, `delivery.doc`, …), never by guessing filenames
 - Scripts and the hook read `adapter.json`; with the template adapter every platform check degrades to "fill in your adapter"
 - `adapters/*` except `_template` is git-ignored: a team's adapter is private by design and lives in its own repository

@@ -14,8 +14,9 @@ CMD=$(printf '%s' "$IN" | python3 -c 'import sys,json; d=json.load(sys.stdin); p
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 if [ -n "$DS_HARNESS_ADAPTER_DIR" ]; then ADIR="$DS_HARNESS_ADAPTER_DIR"
 elif [ -n "$DS_HARNESS_ADAPTER" ]; then ADIR="$ROOT/adapters/$DS_HARNESS_ADAPTER"
-elif [ -s "$HOME/.codex/ds-harness-adapter" ]; then ADIR="$(head -1 "$HOME/.codex/ds-harness-adapter")"
+elif [ -s "$HOME/.ds-harness/adapter" ]; then ADIR="$(head -1 "$HOME/.ds-harness/adapter")"
 elif [ -s "$HOME/.claude/ds-harness-adapter" ]; then ADIR="$(head -1 "$HOME/.claude/ds-harness-adapter")"
+elif [ -s "$HOME/.codex/ds-harness-adapter" ]; then ADIR="$(head -1 "$HOME/.codex/ds-harness-adapter")"
 else ADIR="$ROOT/adapters/_template"; fi
 ADIR="${ADIR/#\~/$HOME}"
 CFG="$ADIR/adapter.json"

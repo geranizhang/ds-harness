@@ -6,7 +6,9 @@ extension point. The core never hard-codes platform, team or language specifics;
 Resolution order:
   1. $DS_HARNESS_ADAPTER_DIR          absolute path (preferred for private adapters)
   2. $DS_HARNESS_ADAPTER              name under <harness>/adapters/
-  3. <harness>/adapters/_template     checks degrade to "fill in your adapter"
+  3. ~/.ds-harness/adapter            written by bin/install.sh for whichever host; one line, the adapter path
+  4. ~/.claude/ds-harness-adapter, ~/.codex/ds-harness-adapter   0.2 per-host pointers, kept for compatibility
+  5. <harness>/adapters/_template     checks degrade to "fill in your adapter"
 
 <harness> is $CLAUDE_PLUGIN_ROOT when installed as a plugin, otherwise the repository root inferred from this file.
 """
@@ -25,7 +27,9 @@ def harness_root() -> Path:
     return Path(env) if env else REPO_ROOT
 
 
-POINTERS = [  # written by bin/install.sh (Claude Code) and bin/install-codex.sh (Codex); both hold the same adapter path
+POINTER_DIR = Path.home() / ".ds-harness"       # adapter / host / profile, one line each (bin/install.sh)
+POINTERS = [                                     # 0.3 pointer first, then the 0.2 per-host pointers
+    POINTER_DIR / "adapter",
     Path.home() / ".claude" / "ds-harness-adapter",
     Path.home() / ".codex" / "ds-harness-adapter",
 ]
