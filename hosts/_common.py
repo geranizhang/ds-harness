@@ -93,32 +93,26 @@ def parse_agent(path: Path):
 
 
 def tools(cfg: dict):
-    """Normalize platform.tools: spec 0.3 list of declarations, or the 0.2 {query_cli, mcp_server} pair."""
-    t = hc.get(cfg, "platform.tools")
-    if isinstance(t, list):
-        return t
-    out = []
-    if isinstance(t, dict):
-        if t.get("query_cli"):
-            out.append({"name": t["query_cli"], "kind": "cli", "legacy": True})
-        if t.get("mcp_server"):
-            out.append({"name": t["mcp_server"], "kind": "mcp", "legacy": True})
-    return out
+    return hc.tools(cfg)
 
 
-def resolve_command(decl: dict):
-    """First existing candidate in decl['resolve'] (globs allowed), else decl['command'] as given."""
-    for cand in decl.get("resolve") or []:
-        for hit in sorted(glob.glob(str(expand(cand)))):
-            if os.path.exists(hit):
-                return hit
-    return decl.get("command")
+def resolve_exec(decl: dict):
+    return hc.resolve_exec(decl)
+
+
+def mcp_invocation(decl: dict):
+    """(command, args, env) for registering an mcp-kind declaration with a host, or None when it does not resolve."""
+    ex = resolve_exec(decl)
+    if not ex:
+        return None
+    return ex[0], ex[1:] + list(decl.get("mcp_args") or []), hc.tool_env(decl)
 
 
 def write_pointer(host: str, adapter_dir: Path, profile: Path = None):
     POINTER_DIR.mkdir(parents=True, exist_ok=True)
     (POINTER_DIR / "adapter").write_text(str(adapter_dir) + "\n", encoding="utf-8")
     (POINTER_DIR / "host").write_text(host + "\n", encoding="utf-8")
+    (POINTER_DIR / "harness").write_text(str(CORE) + "\n", encoding="utf-8")
     if profile:
         (POINTER_DIR / "profile").write_text(str(profile) + "\n", encoding="utf-8")
     print(f"  {POINTER_DIR}/adapter -> {adapter_dir}")

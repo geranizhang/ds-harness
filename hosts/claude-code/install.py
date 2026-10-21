@@ -65,13 +65,17 @@ def register_tools(cfg, host):
         if t["name"] in servers:
             print(f"  {t['name']}: already in {p} (left as is)")
             continue
-        cmd = c.resolve_command(t)
-        entry = {"type": "stdio", "command": cmd, "args": t.get("args") or []}
-        if t.get("env"):
-            entry["env"] = t["env"]
+        inv = c.mcp_invocation(t)
+        if not inv:
+            print(f"  {t['name']}: not found on this machine (candidates: {t.get('candidates') or t.get('command')}); see {t.get('setup_doc') or 'platform.setup'}")
+            continue
+        cmd, args, env = inv
+        entry = {"type": "stdio", "command": cmd, "args": args}
+        if env:
+            entry["env"] = env
         servers[t["name"]] = entry
         changed = True
-        print(f"  {t['name']}: added to {p} ({cmd} {' '.join(entry['args'])})")
+        print(f"  {t['name']}: added to {p} ({cmd} {' '.join(args)})")
     if changed:
         p.write_text(json.dumps(d, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 

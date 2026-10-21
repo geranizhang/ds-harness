@@ -1,6 +1,6 @@
 # Architecture 0.3: core × host × adapter (+ profile)
 
-Status: **design, not implemented.** Written 2026-10-20 after the Codex install exposed where the 0.2 split stops short. `DESIGN.md` records the 0.2 core/adapter boundary; this page proposes the next cut. Nothing here changes the analysis flow, the gates, the agents' jobs or the validators.
+Status: **implemented 2026-10-20** (steps 1–5 of §9; the five decisions in §10 were all taken as proposed). Written the same day after the Codex install exposed where the 0.2 split stops short. `DESIGN.md` records the 0.2 core/adapter boundary; this page proposes the next cut. Nothing here changes the analysis flow, the gates, the agents' jobs or the validators.
 
 ## 1. Goal
 
@@ -81,23 +81,23 @@ One pointer directory replaces the per-host pointers: `~/.ds-harness/` with `ada
 ```json
 "tools": [
   {
-    "name": "bytedcli",
+    "name": "your-cli",
     "kind": "mcp",
-    "command": "bytedcli", "args": ["mcp"],
-    "env": {"NPM_CONFIG_REGISTRY": "http://bnpm.byted.org"},
-    "resolve": ["/opt/homebrew/bin/bytedcli", "~/.npm/_npx/*/node_modules/@bytedance-dev/bytedcli/dist/bytedcli.js"],
-    "health_check": "bytedcli auth status",
-    "mcp_tool_names": ["mcp__bytedcli__run_command", "mcp__bytedcli__list_commands"],
+    "candidates": [["/opt/homebrew/bin/your-cli"], ["your-cli"], ["node", "~/.npm/_npx/*/node_modules/your-cli/dist/cli.js"]],
+    "mcp_args": ["mcp"],
+    "env": {"NPM_CONFIG_REGISTRY": "http://registry.internal"},
+    "health_check": ["auth", "status"],
+    "mcp_tool_names": ["mcp__your-cli__run_command"],
     "setup_doc": "platform/setup.md"
   },
-  {"name": "lark-cli", "kind": "cli", "health_check": "lark-cli auth status", "setup_doc": "delivery/conventions.md"}
+  {"name": "doc-cli", "kind": "cli", "candidates": [["doc-cli"]], "health_check": ["auth", "status"], "setup_doc": "delivery/conventions.md"}
 ]
 ```
 
-- `kind: mcp` → the host's `register_tools.py` writes the server entry in the host's own format. `kind: cli` → `verify.sh` checks it is on PATH and runs the health check.
-- `resolve` is an ordered list of candidate executables (globs allowed); the first that exists is used. Adapter scripts that today hard-code a path call `harness_config.tool_path("bytedcli")` instead.
+- `kind: mcp` → the host binding registers the server in the host's own format (resolved argv + `mcp_args`). `kind: cli` → verify checks it resolves and runs the health check.
+- `candidates` is an ordered list of argv prefixes (globs allowed, newest match wins); the first whose program exists is used, so one declaration covers a global install and an npx cache. Adapter scripts call `harness_config.tool_exec("your-cli")` and get that argv prefix instead of hard-coding a path.
 - Secrets never appear here; `env` values that are secrets are written as `$VAR_NAME` and come from the profile.
-- The guard's `compliance.guard.command_patterns` and `mcp_tool` can be derived from `mcp_tool_names` + `name`; 0.3 keeps them explicit for compatibility and `verify.sh` warns when they disagree.
+- The guard's `compliance.guard.command_patterns` and `mcp_tool` could be derived from `mcp_tool_names` + `name`; 0.3 keeps them explicit (not yet cross-checked by verify).
 - `platform/setup.md` stays as the human runbook for login flows and failure signatures; it stops being the only place the server command is written.
 
 `adapter.schema.json` gets the new shape; `spec_version` becomes `"0.3"`; a 0.2 adapter still loads (tools list optional, two-name object accepted and warned about).
@@ -131,7 +131,7 @@ bin/install.sh --uninstall [--host codex]
 bin/doctor.sh                       # pointer, links, hook, tools (health checks), evals summary
 ```
 
-`install.sh` reads `hosts/<host>/host.json`, calls that host's scripts in order (skills → agents → hook → tools → pointer), then runs `verify.sh`. The team repo's one-line `install.sh` wrapper stays, defaulting the adapter path and forwarding `--host`.
+`install.sh` reads `hosts/<host>/host.json`, runs that host's `install.py` (skills → agents → hook → tools → pointer), then `hosts/verify.py`. The team repo's one-line `install.sh` wrapper stays, defaulting the adapter path and forwarding `--host`. `bin/doctor.sh` = verify + knowledge-source staleness + both evals suites. The pointer directory also records `harness` (the core path) so adapter scripts can import `harness_config` without knowing where the checkout is.
 
 ## 7. Knowledge sources (small, deliberate)
 

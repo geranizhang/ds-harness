@@ -45,7 +45,7 @@ DS_HARNESS_ADAPTER_DIR=/path/to/<your-team> python3 evals/run_validators.py
 DS_HARNESS_ADAPTER_DIR=/path/to/<your-team> bash evals/run_hook_tests.sh
 ```
 
-The host binding (`hosts/<host>/install.py`) links core and adapter skills, renders agents in the host's format, registers the hook and declared tools, and writes `~/.ds-harness/adapter`; scripts, the hook and the agents resolve the adapter from that pointer on any host when no env var is set. `hosts/verify.py <host>` checks the result.
+The host binding (`hosts/<host>/install.py`) links core and adapter skills, renders agents in the host's format, registers the hook and the tools declared in `platform.tools` (spec 0.3: `candidates`, `mcp_args`, `env`, `health_check`), and writes `~/.ds-harness/{adapter,host,harness}`; scripts, the hook and the agents resolve the adapter from that pointer on any host when no env var is set. Per-person values (projects root, approvals dir, secrets named in `channel.secrets_env`, a tool's local command) go in `~/.ds-harness/profile.json` (`adapter-spec/profile.schema.json`), never in the adapter. `bin/doctor.sh` checks the whole install.
 
 ## 6. Keep it alive
 

@@ -38,13 +38,23 @@ def main(host_name):
         check(any("guard" in json.dumps(e) for e in d.get("hooks", {}).get(host["hooks"]["event"], [])), f"hook entry in {hp}")
     if host["hooks"].get("stdin") == "unknown":
         print(f"WARN hook stdin protocol unverified on {host_name}: {host['hooks'].get('note', '')}")
+    print(f"INFO profile: {cfg.get('_profile') or 'none (optional; ~/.ds-harness/profile.json)'}")
     for t in c.tools(cfg):
         hc_cmd = t.get("health_check")
         if t.get("legacy") or not hc_cmd:
             print(f"INFO tool {t['name']}: no health_check declared")
             continue
-        r = subprocess.run(hc_cmd, shell=True, capture_output=True, text=True)
-        check(r.returncode == 0, f"tool {t['name']}: {hc_cmd} (exit {r.returncode})")
+        ex = c.resolve_exec(t)
+        if not ex:
+            check(False, f"tool {t['name']}: not found (candidates {t.get('candidates') or t.get('command')}); see {t.get('setup_doc') or 'platform.setup'}")
+            continue
+        argv = ex + list(hc_cmd) if isinstance(hc_cmd, list) else hc_cmd
+        try:
+            r = subprocess.run(argv, shell=isinstance(argv, str), capture_output=True, text=True, timeout=20,
+                               env={**__import__("os").environ, **c.hc.tool_env(t)})
+            check(r.returncode == 0, f"tool {t['name']}: {' '.join(argv) if isinstance(argv, list) else argv} (exit {r.returncode}) {(r.stdout or r.stderr).strip().splitlines()[-1][:80] if (r.stdout or r.stderr).strip() else ''}")
+        except subprocess.TimeoutExpired:
+            check(False, f"tool {t['name']}: health check timed out (20s)")
         if t.get("kind") == "mcp":
             tf = c.expand(host["tools"]["file"])
             txt = tf.read_text() if tf.exists() else ""

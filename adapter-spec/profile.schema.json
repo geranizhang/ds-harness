@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ds-harness profile (per person, never in git)",
+  "description": "~/.ds-harness/profile.json. Only these keys may override the adapter; harness_config.load() refuses any other.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "_comment": {
+      "type": "string"
+    },
+    "workspace": {
+      "type": "object",
+      "description": "overrides operations.workspace (projects_root, ...)"
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "approvals_dir": {
+          "type": "string"
+        }
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "ENV_NAME: value; names must be declared in channel.secrets_env"
+    },
+    "tools": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "candidates": {
+            "type": "array"
+          },
+          "env": {
+            "type": "object"
+          },
+          "health_check": {
+            "type": [
+              "array",
+              "string"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

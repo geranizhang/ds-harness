@@ -12,6 +12,7 @@ Every case reproduces a real incident class:
   binning     bins / ratio / top-N frozen in SQL    → validate_sql WARN; --allow-binning silences
   doc         colloquialism + number not in table   → validate_doc FAIL; clean draft PASS
   xlsx        '=' cell / text rate / missing ALL    → validate_xlsx FAIL
+  config      profile overriding a team rule / undeclared secret → refused; allowed keys applied; tool candidates resolve
   <adapter>   cases from the adapter's evals_cases.py, if present (e.g. compliance SQL that must fail / pass)
 """
 import json
@@ -144,6 +145,32 @@ def case_xlsx(tmp):
     expect("xlsx: missing provenance blocked", "provenance" in out, out)
 
 
+def case_config(tmp):
+    """harness_config: profile allow-list, tool declaration normalization and resolution (no adapter files needed)."""
+    import copy
+    cfg = copy.deepcopy(CFG)
+    cfg.setdefault("channel", {})["secrets_env"] = ["MY_SECRET"]
+    cfg["platform"]["tools"] = [{"name": "pyx", "kind": "cli", "candidates": [["/nonexistent/pyx"], [sys.executable, "-c"]], "health_check": ["--version"]}]
+    try:
+        hc.apply_profile(copy.deepcopy(cfg), {"delivery": {"doc": {}}}, "t")
+        expect("config: profile cannot override a team rule", False)
+    except SystemExit as e:
+        expect("config: profile cannot override a team rule", "not allowed" in str(e), str(e))
+    try:
+        hc.apply_profile(copy.deepcopy(cfg), {"secrets": {"OTHER": "x"}}, "t")
+        expect("config: undeclared secret refused", False)
+    except SystemExit as e:
+        expect("config: undeclared secret refused", "not declared" in str(e), str(e))
+    c2 = hc.apply_profile(copy.deepcopy(cfg), {"workspace": {"projects_root": "/p"}, "governance": {"approvals_dir": "/a"}, "secrets": {"MY_SECRET": "s"},
+                                               "tools": {"pyx": {"env": {"X": "1"}}}}, "t")
+    expect("config: allowed profile keys applied", hc.get(c2, "operations.workspace.projects_root") == "/p" and hc.get(c2, "operations.governance.approvals_dir") == "/a"
+           and c2["_secrets"]["MY_SECRET"] == "s" and hc.tool_decl(c2, "pyx")["env"] == {"X": "1"}, json.dumps(c2.get("_secrets")))
+    ex = hc.resolve_exec(hc.tool_decl(c2, "pyx"))
+    expect("config: first existing candidate wins", ex == [sys.executable, "-c"], str(ex))
+    legacy = hc.tools({"platform": {"tools": {"query_cli": "x-cli", "mcp_server": "x-cli"}}})
+    expect("config: 0.2 tool pair normalized", legacy == [{"name": "x-cli", "kind": "mcp", "legacy": True}], str(legacy))
+
+
 def adapter_cases():
     """An adapter may name an evals module (adapter.json → evals.cases) with `cases(ctx) -> list[callable(tmp)]`."""
     mod = hc.load_module(CFG, "evals.cases")
@@ -155,7 +182,7 @@ def adapter_cases():
 
 def main():
     tmp = tempfile.mkdtemp(prefix="ds-harness-evals-")
-    cases = [case_truncation, case_topn, case_sampling, case_binning, case_doc, case_xlsx] + adapter_cases()
+    cases = [case_truncation, case_topn, case_sampling, case_binning, case_doc, case_xlsx, case_config] + adapter_cases()
     print(f"adapter: {ADAPTER}")
     try:
         for c in cases:

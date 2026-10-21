@@ -4,7 +4,7 @@
   "type": "object",
   "required": ["spec_version", "name", "platform", "delivery", "operations"],
   "properties": {
-    "spec_version": {"const": "0.2"},
+    "spec_version": {"enum": ["0.2", "0.3"]},
     "name": {"type": "string", "pattern": "^[a-z0-9_-]+$"},
     "display_name": {"type": "string"},
     "language": {"type": "string"},
@@ -16,7 +16,28 @@
         "regions": {"type": "array", "items": {"type": "string"}, "minItems": 1},
         "default_regions": {"type": "array", "items": {"type": "string"}, "minItems": 1},
         "region_aliases": {"type": "object", "additionalProperties": {"type": "string"}},
-        "tools": {"type": "object", "properties": {"query_cli": {"type": ["string", "null"]}, "mcp_server": {"type": ["string", "null"]}}},
+        "tools": {
+          "oneOf": [
+            {"type": "object", "properties": {"query_cli": {"type": ["string", "null"]}, "mcp_server": {"type": ["string", "null"]}},
+             "description": "spec 0.2: names only; the person registers the tools by hand per platform.setup"},
+            {"type": "array", "description": "spec 0.3: declarations the host binding registers and verifies",
+             "items": {
+               "type": "object", "required": ["name", "kind"],
+               "properties": {
+                 "name": {"type": "string"},
+                 "kind": {"enum": ["mcp", "cli"]},
+                 "candidates": {"type": "array", "items": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+                                "description": "ordered argv prefixes; first whose program exists wins; globs resolve to the newest match"},
+                 "command": {"type": "string"}, "args": {"type": "array", "items": {"type": "string"}},
+                 "mcp_args": {"type": "array", "items": {"type": "string"}, "description": "appended to the resolved argv to start the MCP server"},
+                 "env": {"type": "object", "additionalProperties": {"type": "string"}, "description": "no secret values; reference profile secrets as $NAME"},
+                 "health_check": {"type": ["array", "string"], "items": {"type": "string"}, "description": "argv appended to the resolved exec (list) or a shell command (string); exit 0 = healthy"},
+                 "mcp_tool_names": {"type": "array", "items": {"type": "string"}},
+                 "setup_doc": {"type": "string"}
+               }
+             }}
+          ]
+        },
         "fetch_limits": {"type": "object"},
         "sql": {
           "type": "object",
@@ -63,7 +84,8 @@
     "knowledge": {
       "type": "object",
       "properties": {
-        "tables": {"type": "string"}, "metrics": {"type": "string"}, "glossary": {"type": "string"}
+        "tables": {"type": "string"}, "metrics": {"type": "string"}, "glossary": {"type": "string"},
+        "sources": {"type": ["string", "null"], "description": "spec 0.3: registry of the wiki / documents the handbooks were distilled from, with last-checked dates"}
       }
     },
 
@@ -157,7 +179,12 @@
 
     "extensions": {
       "type": "object",
-      "properties": {"skills": {"type": ["string", "null"]}, "agents": {"type": ["string", "null"]}}
+      "properties": {
+        "skills": {"type": ["string", "null"]}, "agents": {"type": ["string", "null"]},
+        "entry_skill": {"type": "object", "required": ["name"],
+                        "properties": {"name": {"type": "string"}, "description": {"type": "string"}, "body": {"type": "string"}},
+                        "description": "optional one-page router skill written under the team's own name by hosts that benefit from it (Codex)"}
+      }
     }
   }
 }

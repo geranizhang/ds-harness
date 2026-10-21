@@ -1,5 +1,5 @@
 {
-  "spec_version": "0.2",
+  "spec_version": "0.3",
   "name": "_template",
   "display_name": "Your team / platform",
   "language": "en",
@@ -8,7 +8,10 @@
     "regions": ["REGION_A", "REGION_B"],
     "default_regions": ["REGION_A", "REGION_B"],
     "region_aliases": {},
-    "tools": {"query_cli": "your-cli", "mcp_server": null},
+    "tools": [
+      {"name": "your-cli", "kind": "mcp", "candidates": [["your-cli"], ["node", "~/.npm/_npx/*/node_modules/your-cli/dist/cli.js"]],
+       "mcp_args": ["mcp"], "env": {}, "health_check": ["auth", "status"], "mcp_tool_names": ["mcp__your-cli__run_command"], "setup_doc": "platform/setup.md"}
+    ],
     "fetch_limits": {
       "default": {"rows": null, "bytes": null, "note": "per-engine cap that silently truncates results, if any"}
     },
@@ -47,7 +50,8 @@
   "knowledge": {
     "tables": "knowledge/tables.md",
     "metrics": "knowledge/metrics.md",
-    "glossary": "knowledge/glossary.md"
+    "glossary": "knowledge/glossary.md",
+    "sources": "knowledge/sources.md"
   },
 
   "analysis_priors": {

@@ -22,12 +22,11 @@ ADIR="${ADIR/#\~/$HOME}"
 CFG="$ADIR/adapter.json"
 [ -f "$CFG" ] || exit 0   # no adapter → nothing platform-specific to enforce
 
-# dotted-path reader; lists are joined with | so they drop straight into grep -E
-read_cfg() { python3 -c 'import sys,json
-d=json.load(open(sys.argv[1]))
-for k in sys.argv[2].split("."):
-    d = d.get(k) if isinstance(d, dict) else None
-print("|".join(d) if isinstance(d,list) else ("" if d is None else d))' "$CFG" "$1" 2>/dev/null; }
+# dotted-path reader through harness_config (adapter ⊕ profile); lists are joined with | so they drop straight into grep -E
+read_cfg() { DS_HARNESS_ADAPTER_DIR="$ADIR" python3 -c 'import sys
+sys.path.insert(0, sys.argv[1]); import harness_config as hc
+d = hc.get(hc.load(), sys.argv[2])
+print("|".join(d) if isinstance(d,list) else ("" if d is None else d))' "$ROOT/skills/_shared" "$1" 2>/dev/null; }
 CMD_PAT=$(read_cfg compliance.guard.command_patterns)
 SUBMIT_PAT=$(read_cfg compliance.guard.submit_patterns)
 SUBMIT_REGION=$(read_cfg compliance.guard.submit_region)

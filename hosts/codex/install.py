@@ -78,13 +78,17 @@ def register_tools(cfg, host):
         if re.search(rf"^\[mcp_servers\.{re.escape(t['name'])}\]", text, re.M):
             print(f"  {t['name']}: already in {p} (left as is)")
             continue
-        cmd = c.resolve_command(t)
-        block = [f"\n[mcp_servers.{t['name']}]", f'command = {json.dumps(cmd)}', f"args = {json.dumps(t.get('args') or [])}", "startup_timeout_sec = 60"]
-        if t.get("env"):
+        inv = c.mcp_invocation(t)
+        if not inv:
+            print(f"  {t['name']}: not found on this machine (candidates: {t.get('candidates') or t.get('command')}); see {t.get('setup_doc') or 'platform.setup'}")
+            continue
+        cmd, args, env = inv
+        block = [f"\n[mcp_servers.{t['name']}]", f'command = {json.dumps(cmd)}', f"args = {json.dumps(args)}", "startup_timeout_sec = 60"]
+        if env:
             block.append(f"\n[mcp_servers.{t['name']}.env]")
-            block += [f'{k} = {json.dumps(v)}' for k, v in t["env"].items()]
+            block += [f'{k} = {json.dumps(v)}' for k, v in env.items()]
         text = text.rstrip("\n") + "\n" + "\n".join(block) + "\n"
-        print(f"  {t['name']}: appended to {p} ({cmd} {' '.join(t.get('args') or [])})")
+        print(f"  {t['name']}: appended to {p} ({cmd} {' '.join(args)})")
     p.write_text(text, encoding="utf-8")
 
 

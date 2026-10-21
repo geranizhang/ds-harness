@@ -61,6 +61,7 @@ hooks/               PreToolUse guard, configured by the adapter
 evals/               validator regression · hook regression · corrections ledger tooling
 bin/install.sh       one entry point: --host <claude-code|codex> --adapter <dir>; host bindings under hosts/<host>/
 hosts/               one directory per agent host: host.json (where things go, capabilities) + install.py; verify.py checks an install
+bin/doctor.sh        health check for this machine: verify + knowledge-source staleness + both regression suites
 docs/                DESIGN.md (core/adapter split) · ADAPTER.md (walkthrough)
 ```
 

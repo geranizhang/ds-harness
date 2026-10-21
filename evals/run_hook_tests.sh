@@ -18,7 +18,8 @@ print("" if v is None else (" ".join(v) if isinstance(v,list) else v))' "$A/adap
 G=compliance.guard.tests
 HDR=$(j platform.sql.header_markers); CLI=$(j $G.cli); QCMD=$(j $G.query_cmd); RO=$(j $G.readonly_cmd)
 SUBF=$(j $G.submit_file_cmd); SUBID=$(j $G.submit_id_cmd); BAD=$(j $G.bad_sql); GOOD=$(j $G.good_sql)
-APPR=$(python3 -c 'import os; print(os.path.expanduser("'"$(j operations.governance.approvals_dir)"'" or "~/.claude/approvals"))')
+# approvals dir as the guard sees it (adapter ⊕ profile)
+APPR=$(DS_HARNESS_ADAPTER_DIR="$A" python3 -c "import sys, os; sys.path.insert(0, '$HERE/../skills/_shared'); import harness_config as hc; print(os.path.expanduser(hc.get(hc.load(), 'operations.governance.approvals_dir') or '~/.claude/approvals'))")
 TOOL=$(j $G.mcp_tool); TOOL=${TOOL:-Bash}
 [ -n "$CLI" ] && [ -n "$QCMD" ] || { echo "adapter.json compliance.guard.tests needs at least cli and query_cmd"; exit 2; }
 T=$(mktemp -d); rm -rf "$APPR"; pass=0; fail=0
