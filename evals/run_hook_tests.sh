@@ -9,7 +9,8 @@
 #   bad_sql / good_sql (optional) SQL bodies (header is prepended) for the submit tests
 HERE=$(cd "$(dirname "$0")" && pwd); H="$HERE/../hooks/guard.sh"
 export CLAUDE_PLUGIN_ROOT="$HERE/.."
-A="${DS_HARNESS_ADAPTER_DIR:-$CLAUDE_PLUGIN_ROOT/adapters/${DS_HARNESS_ADAPTER:-_template}}"
+# resolve the adapter exactly as guard.sh and the scripts do (env vars, then the host pointer files, then the template)
+A=$(python3 -c "import sys; sys.path.insert(0, '$HERE/../skills/_shared'); import harness_config as hc; print(hc.adapter_dir())")
 [ -f "$A/adapter.json" ] || { echo "no adapter.json at $A"; exit 2; }
 j() { python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); v=d
 for k in sys.argv[2].split("."): v=(v or {}).get(k)
