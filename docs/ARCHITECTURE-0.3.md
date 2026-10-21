@@ -170,6 +170,6 @@ Each step is independently shippable; 0.2 adapters keep working until step 3, an
 
 ## 11. Non-goals
 
-- Changing the analysis flow, the gates, the claim ladder or any validator.
+- Changing the analysis flow, the gates or any validator.
 - Supporting a host without sub-agents by rewriting the agents as prompts; such a host is declared as lacking the capability and the workflow runs in degraded mode.
 - Making the adapter public or splitting it; it stays one private repo per team.
